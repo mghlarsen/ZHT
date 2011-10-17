@@ -1,0 +1,11 @@
+*.swp
+*.pyc
+src/*
+bin/*
+lib/*
+include/*
+socks/*
+dist/*
+MANIFEST
+requirements.txt
+*.egg-info
