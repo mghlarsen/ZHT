@@ -11,6 +11,7 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         'gevent-zeromq>=0.2.0',
+        'pyzmq>=2.1',
     ]
 )
 
