@@ -17,7 +17,7 @@ class Peer(object):
             peerList = reply[2:]
             for i in range(len(peerList) / 2):
                 print "Peer %s: %d - ID:%s repAddr:%s" % (self._id, i, peerList[(i * 2)], peerList[(i * 2) + 1])
-        reply = self._makeRequest(["PARTITIONS"])
+        reply = self._makeRequest(["BUCKETS"])
         print "Reply: %s" % (reply,)
         self.__initialized = True
     

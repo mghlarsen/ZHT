@@ -1,4 +1,5 @@
 from functools import total_ordering
+from time import time
 import collections
 import hashlib
 
@@ -23,7 +24,19 @@ class Table(object):
     def _getKeyBucket(self, key):
         return self._buckets[self._getKeyHashPrefix(key)]
 
-    def ownedPartitions(self):
+    def __getitem__(self, key):
+        return self._getKeyBucket(key)[key]
+
+    def __setitem__(self, key, value):
+        self._getKeyBucket(key)[key] = value
+
+    def putValue(self, key, value, timestamp):
+        self._getKeyBucket(key).putValue(key, value, timestamp)
+
+    def getValue(self, key):
+        return self._getKeyBucket(key).getValue(key)
+
+    def ownedBuckets(self):
         return frozenset(self._owned)
 
 class Bucket(object):
@@ -32,15 +45,21 @@ class Bucket(object):
         self._owned = owned
         self._entries = dict()
 
-    def _getValue(self, key):
+    def __getitem__(self, key):
+        return self.getValue(key)._value
+
+    def __setitem__(self, key, value):
+        self.putValue(key, value, time())
+
+    def getValue(self, key):
         if self._owned or key in self._entries:
             return self._entries[key]
         raise NotImplemented("Uncached Lookup not implemented.")
 
-    def _putValue(self, key, value, timestamp):
+    def putValue(self, key, value, timestamp):
         if self._owned:
             if key in self._entries:
-                self._entries[key].putValue(key, value, timestamp)
+                self._entries[key].putValue(value, timestamp)
             else:
                 self._entries[key] = TableEntry(key, value, timestamp)
         else:
@@ -75,25 +94,11 @@ class TableEntry(object):
     def __hash__(self):
         return hash(self._key)
 
-
-t = Table()
-prefixes = tuple(t._generatePrefixes(4))
-
-def saveEntry(key, value, timestamp=None):
-    bucket = t._getKeyBucket(key)
-    bucket._putValue(key, value, timestamp)
-    return bucket._prefix
-
-def getEntry(key):
-    bucket = t._getKeyBucket(key)
-    return (bucket._prefix, bucket._getValue(key))
-
-saveEntry('asdf', 'qwer')
-saveEntry('as', 'qwer')
-saveEntry('asd', 'qwer')
-saveEntry('adf', 'qwer')
-saveEntry('adasdff', 'qwer')
-saveEntry('aweewdasdff', 'qwer')
-saveEntry('aweewdasd', 'qwer')
-saveEntry('awewdasd', 'qwer')
+    def putValue(self, value, timestamp):
+        if self._timestamp < timestamp or self._timestamp is None:
+            print "New value:%s" % (value,)
+            self._value = value
+            self._timestamp = timestamp
+        else:
+            print "Ignored write, self:%s passed:%s" % (self._timestamp, timestamp)
 

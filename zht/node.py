@@ -1,9 +1,5 @@
-from cmd import Cmd
 from gevent_zeromq import zmq
 from gevent.pool import Pool
-
-import argparse
-
 from table import Table
 from peer import Peer
 
@@ -24,11 +20,11 @@ class Node(object):
         self._req = self._ctx.socket(zmq.XREQ)
         self._peers = dict()
         self._table = Table()
-        self._controlSock = self._ctx.socket(zmq.PULL)
-        self._controlSock.bind('inproc://zhtnode-control')
+        self._controlSock = self._ctx.socket(zmq.REP)
+        self._controlSock.bind('ipc://.zhtnode-control-' + identity)
 
     def spawn(self, f, *args, **kwargs):
-        self._greenletPool.spawn(f, *args, **kwargs)
+        return self._greenletPool.spawn(f, *args, **kwargs)
 
     def _subConnect(self, addr):
         self._sub.connect(addr)
@@ -55,12 +51,24 @@ class Node(object):
             m = self._controlSock.recv_multipart()
             if m[0] == 'EOF':
                 self._greenletPool.kill()
+                self._controlSock.send('OK')
                 return
             elif m[0] == 'CONNECT':
-                for addr in m[1:]:
-                    self.spawn(self.connect, addr)
+                self._greenletPool.map(self.connect, m[1:])
+                self._controlSock.send('OK')
+            elif m[0] == 'GET':
+                r = []
+                for key in m[1:]:
+                    try:
+                        r.append(self._table[key])
+                    except KeyError:
+                        r.append('KeyError')
+                self._controlSock.send_multipart(r)
+            elif m[0] == 'PUT':
+                self._table[m[1]] = m[2]
+                self._controlSock.send_multipart(['OK', m[1], m[2]])
             else:
-                print m
+                self._controlSock.send(['ERR', 'UNKNOWN COMMAND'] + m)
 
     def _handleRep(self):
         while True:
@@ -86,10 +94,10 @@ class Node(object):
             reply = envelope + ["PEERS", str(len(self._peers))]
             for ident in self._peers.keys():
                 reply += [ident, self._peers[ident]._reqAddr]
-        elif msg[0] == "PARTITIONS":
-            print "Recieved PARTITIONS request"
-            partitions = self._table.ownedPartitions()
-            reply = envelope + ["PARTITIONS", str(len(partitions))]
+        elif msg[0] == "BUCKETS":
+            print "Recieved BUCKETS request"
+            partitions = self._table.ownedBuckets()
+            reply = envelope + ["BUCKETS", str(len(partitions))]
             for part in partitions:
                 reply.append(part)
         else:
