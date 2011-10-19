@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ZHT',
-    version='0.0.1dev',
+    version='0.0.1a1',
     author='Michael Larsen',
     author_email='mike.gh.larsen@gmail.com',
     packages=['zht'],
