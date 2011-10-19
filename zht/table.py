@@ -31,7 +31,7 @@ class Table(object):
         self._getKeyBucket(key)[key] = value
 
     def putValue(self, key, value, timestamp):
-        self._getKeyBucket(key).putValue(key, value, timestamp)
+        return self._getKeyBucket(key).putValue(key, value, timestamp)
 
     def getValue(self, key):
         return self._getKeyBucket(key).getValue(key)
@@ -67,9 +67,10 @@ class Bucket(object):
     def putValue(self, key, value, timestamp):
         if self._owned:
             if key in self._entries:
-                self._entries[key].putValue(value, timestamp)
+                return self._entries[key].putValue(value, timestamp)
             else:
                 self._entries[key] = TableEntry(key, value, timestamp)
+                return True
         else:
             raise NotImplemented("Unowned put not implemented.")
     
@@ -107,6 +108,8 @@ class TableEntry(object):
             print "New value:%s" % (value,)
             self._value = value
             self._timestamp = timestamp
+            return True
         else:
             print "Ignored write, self:%s passed:%s" % (self._timestamp, timestamp)
+            return False
 

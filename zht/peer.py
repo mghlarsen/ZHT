@@ -27,20 +27,18 @@ class Peer(object):
                 for key, timestamp in keysDict.items():
                     try:
                         entry = self._node._table.getValue(str(key))
-                        print "%f < %f ??" % (entry._timestamp, float(timestamp))
                         if entry._timestamp < float(timestamp):
-                            print "Sending GET (TI)"
                             getReply = self._makeRequest(["GET", str(key)])
-                            print "GET REPLY (TI): %s" % (getReply,)
-                            entry.putValue(msg[2], float(msg[3]))
+                            if entry.putValue(msg[2], float(msg[3])):
+                                self._node._pubUpdate(str(key))
                     except KeyError:
-                        print "Sending GET (KE)"
                         getReply = self._makeRequest(["GET", str(key)])
-                        print "GET REPLY (KE): %s" % (getReply,)
-                        self._node._table.putValue(str(key), getReply[2], float(getReply[3]))
+                        if self._node._table.putValue(str(key), getReply[2], float(getReply[3])):
+                            self._node._pubUpdate(str(key))
         print "Peer %s initialized" % (self._id,)
         self.__initialized = True
     
     def _makeRequest(self, req):
         self._sock.send_multipart(req)
         return self._sock.recv_multipart()
+

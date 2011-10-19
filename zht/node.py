@@ -18,6 +18,7 @@ class Node(object):
         self._pub.setsockopt(zmq.IDENTITY, self._id + ":PUB")
         self._pub.bind(pubAddr)
         self._sub = self._ctx.socket(zmq.SUB)
+        self._sub.setsockopt(zmq.SUBSCRIBE, "")
         self._req = self._ctx.socket(zmq.XREQ)
         self._peers = dict()
         self._table = Table()
@@ -38,6 +39,7 @@ class Node(object):
 
     def start(self):
         self.spawn(self._handleRep)
+        self.spawn(self._handleSub)
         self.spawn(self._handleControl)
 
     def connect(self, addr):
@@ -68,6 +70,7 @@ class Node(object):
             elif m[0] == 'PUT':
                 self._table[m[1]] = m[2]
                 self._controlSock.send_multipart(['OK', m[1], m[2]])
+                self._pubUpdate(m[1])
             else:
                 self._controlSock.send(['ERR', 'UNKNOWN COMMAND'] + m)
 
@@ -81,15 +84,15 @@ class Node(object):
         i = 0
         while m[i] != "":
             i += 1
-        envelope = m[0:i+1]
+        envelope = m[:i+1]
         msg = m[i+1:]
         reply = None
         if msg[0] == "PEER":
             peerInfo = (msg[1], msg[2], msg[3])
             print "Recieved PEER request: identity:%s  REP:%s  PUB:%s" % peerInfo
             reply = envelope + ["PEER", self._id, self._pubAddr]
-            self._peers[peerInfo[0]] = Peer(self, peerInfo[0], peerInfo[1], peerInfo[2], self._reqConnect(peerInfo[1]))
             self._subConnect(peerInfo[2])
+            self._peers[peerInfo[0]] = Peer(self, peerInfo[0], peerInfo[1], peerInfo[2], self._reqConnect(peerInfo[1]))
         elif msg[0] == "PEERS":
             print "Recieved PEERS request"
             reply = envelope
@@ -105,14 +108,27 @@ class Node(object):
             print "Recieved GET request for key '%s'" % (msg[1],)
             try:
                 entry = self._table.getValue(msg[1])
-                print "GET: Got Entry"
                 reply = envelope + ["GET", msg[1], entry._value, repr(entry._timestamp)]
-                print "Generated reply: %s" % (reply,)
             except KeyError:
-                print "GET: Detected KeyError"
                 reply = ["ERROR", "KeyError", "GET", msg[1]]
         else:
             reply = envelope + ["ECHO"] + msg
         print "REPLY: %s" % (reply,)
         self._rep.send_multipart(reply)
+
+    def _pubUpdate(self, key):
+        entry = self._table.getValue(key)
+        self._pub.send_multipart(["UPDATE|" + entry._hash, key, entry._value, repr(entry._timestamp)])
+
+    def _handleSub(self):
+        while True:
+            m = self._sub.recv_multipart()
+            self.spawn(self._handleSubMessage, m)
+
+    def _handleSubMessage(self, m):
+        print "SUB: Recieved %s" % (m,)
+        if m[0][:7] == 'UPDATE|':
+            print "UPDATE key:%s value:%s timestamp:%s" % (m[1], m[2], m[3])
+            if self._table.putValue(m[1], m[2], float(m[3])):
+                self._pubUpdate(m[1])
 
