@@ -2,6 +2,7 @@ from gevent_zeromq import zmq
 from gevent.pool import Pool
 from table import Table
 from peer import Peer
+import json
 
 class Node(object):
     def __init__(self, identity, repAddr, pubAddr, ctx=None, poolSize=200):
@@ -91,16 +92,27 @@ class Node(object):
             self._subConnect(peerInfo[2])
         elif msg[0] == "PEERS":
             print "Recieved PEERS request"
-            reply = envelope + ["PEERS", str(len(self._peers))]
-            for ident in self._peers.keys():
-                reply += [ident, self._peers[ident]._reqAddr]
+            reply = envelope
+            reply.append("PEERS")
+            reply.append(json.dumps(dict(((ident, peer._reqAddr) for ident, peer in self._peers.items()))))
         elif msg[0] == "BUCKETS":
             print "Recieved BUCKETS request"
-            partitions = self._table.ownedBuckets()
-            reply = envelope + ["BUCKETS", str(len(partitions))]
-            for part in partitions:
-                reply.append(part)
+            reply = envelope + ["BUCKETS", json.dumps(self._table.ownedBuckets())]
+        elif msg[0] == "KEYS":
+            print "Recieved KEYS request for bucket '%s'" % (msg[1],)
+            reply = envelope + ["KEYS", msg[1], json.dumps(self._table.getKeySet(msg[1], includeTimestamp=True))]
+        elif msg[0] == "GET":
+            print "Recieved GET request for key '%s'" % (msg[1],)
+            try:
+                entry = self._table.getValue(msg[1])
+                print "GET: Got Entry"
+                reply = envelope + ["GET", msg[1], entry._value, repr(entry._timestamp)]
+                print "Generated reply: %s" % (reply,)
+            except KeyError:
+                print "GET: Detected KeyError"
+                reply = ["ERROR", "KeyError", "GET", msg[1]]
         else:
             reply = envelope + ["ECHO"] + msg
+        print "REPLY: %s" % (reply,)
         self._rep.send_multipart(reply)
 

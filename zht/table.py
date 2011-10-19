@@ -36,8 +36,16 @@ class Table(object):
     def getValue(self, key):
         return self._getKeyBucket(key).getValue(key)
 
+    def getKeySet(self, prefix, includeTimestamp):
+        if len(prefix) > self._prefixLength:
+            prefix = prefix[:self._prefixLength]
+        if prefix in self._buckets:
+            return dict((key, entry._timestamp) for key, entry in self._buckets[prefix]._entries.items())
+        else:
+            return dict()
+
     def ownedBuckets(self):
-        return frozenset(self._owned)
+        return list(self._owned)
 
 class Bucket(object):
     def __init__(self, prefix, owned):
