@@ -24,7 +24,7 @@ def clearWaitingGreenlets(n=10):
     for i in range(2**n):
         gevent.sleep(0)
 
-class TestZHT(TestCase):
+class Test2NodeZHT(TestCase):
     def setUp(self):
         self.aNode, self.aControl = initNode('a', None)
         self.bNode, self.bControl = initNode('b', None)
@@ -56,3 +56,50 @@ class TestZHT(TestCase):
         self.assertEqual(self.bControl.put('zxcv', 'poiu'), ['OK', 'zxcv', 'poiu'])
         self.assertEqual(self.aControl.get(['zxcv']), ['poiu'])
         self.assertEqual(self.bControl.get(['zxcv']), ['poiu'])
+
+class Test3NodeZHT(TestCase):
+    def setUp(self):
+        self.aNode, self.aControl = initNode('a', None)
+        self.bNode, self.bControl = initNode('b', None)
+        self.cNode, self.cControl = initNode('c', None)
+
+    def tearDown(self):
+        closeNode(self.aNode, self.aControl)
+        closeNode(self.bNode, self.bControl)
+        closeNode(self.cNode, self.cControl)
+        self.aNode = self.aControl = self.bNode = self.bControl = self.cNode = self.cControl = None
+
+    def testGet(self):
+        self.assertEqual(self.aControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.bControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.cControl.get(['asdf']), ['KeyError'])
+
+    def testPut(self):
+        self.assertEqual(self.aControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.aControl.put('asdf', 'qwer'), ['OK', 'asdf', 'qwer'])
+        self.assertEqual(self.aControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.bControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.cControl.get(['asdf']), ['KeyError'])
+
+    def testSync(self):
+        self.assertEqual(self.aControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.aControl.put('asdf', 'qwer'), ['OK', 'asdf', 'qwer'])
+        self.assertEqual(self.aControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.bControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.cControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.bControl.connect(['ipc://testSockaREP']), ['OK'])
+        clearWaitingGreenlets(12)
+        self.assertEqual(self.aControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.bControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.cControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.bControl.put('zxcv', 'poiu'), ['OK', 'zxcv', 'poiu'])
+        self.assertEqual(self.aControl.get(['zxcv']), ['poiu'])
+        self.assertEqual(self.bControl.get(['zxcv']), ['poiu'])
+        self.assertEqual(self.cControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.bControl.connect(['ipc://testSockcREP']), ['OK'])
+        clearWaitingGreenlets(12)
+        self.assertEqual(self.aControl.get(['zxcv']), ['poiu'])
+        self.assertEqual(self.bControl.get(['zxcv']), ['poiu'])
+        self.assertEqual(self.cControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.cControl.get(['zxcv']), ['poiu'])
+
