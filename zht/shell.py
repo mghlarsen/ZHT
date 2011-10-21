@@ -4,11 +4,37 @@ from cmd import Cmd
 import zmq
 from node import Node
 
+class ZHTControl(object):
+    def __init__(self, ctx, identity):
+        self._sock = ctx.socket(zmq.REQ)
+        self._sock.connect('ipc://.zhtnode-control-' + identity)
+        self.identity = identity
+    
+    def __send(self, msg):
+        self._sock.send_multipart(msg)
+
+    def __recv(self):
+        return self._sock.recv_multipart()
+    
+    def __req(self, msg):
+        self.__send(msg)
+        return self.__recv()
+
+    def EOF(self):
+        self.__send(['EOF'])
+    
+    def connect(self, addrs):
+        return self.__req(['CONNECT'] + addrs)
+
+    def get(self, keys):
+        return self.__req(['GET'] + keys)
+
+    def put(self, key, value):
+        return self.__req(['PUT', key, value])
+
 class ZHTCmd(Cmd):
     def __init__(self, ctx, identity):
-        self._controlSock = ctx.socket(zmq.REQ)
-        self._controlSock.connect('ipc://.zhtnode-control-' + identity)
-        self.identity = identity
+        self._control = ZHTControl(ctx, identity)
         Cmd.__init__(self)
         self._setPrompt()
 
@@ -16,21 +42,18 @@ class ZHTCmd(Cmd):
         self.prompt = '[ZHT:%(identity)s] ' % self.__dict__
 
     def do_EOF(self, line):
-        self._controlSock.send_multipart(['EOF'])
+        self._control.EOF()
         print ""
         return True
 
     def do_connect(self, line):
-        self._controlSock.send_multipart(['CONNECT'] + line.split())
-        print self._controlSock.recv_multipart()
+        print self._control.connect(line.split())
 
     def do_get(self, line):
-        self._controlSock.send_multipart(['GET'] + line.split())
-        print self._controlSock.recv_multipart()
+        print self._control.get(line.split())
 
     def do_put(self, line):
-        self._controlSock.send_multipart(['PUT'] + line.split(None, 1))
-        print self._controlSock.recv_multipart()
+        print self._control.put(*line.split(None, 1))
 
     def emptyline(self):
         pass
