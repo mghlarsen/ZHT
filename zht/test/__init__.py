@@ -53,4 +53,6 @@ class TestZHT(TestCase):
         clearWaitingGreenlets(12)
         self.assertEqual(self.aControl.get(['asdf']), ['qwer'])
         self.assertEqual(self.bControl.get(['asdf']), ['qwer'])
-        
+        self.assertEqual(self.bControl.put('zxcv', 'poiu'), ['OK', 'zxcv', 'poiu'])
+        self.assertEqual(self.aControl.get(['zxcv']), ['poiu'])
+        self.assertEqual(self.bControl.get(['zxcv']), ['poiu'])
