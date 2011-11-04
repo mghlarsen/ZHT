@@ -2,6 +2,8 @@
 Peers are the outside entities that each Node communicates with.
 """
 import json
+import logging
+log = logging.getLogger('zht.peer')
 
 class Peer(object):
     """
@@ -36,13 +38,13 @@ class Peer(object):
         if reply[0] == "PEERS":
             peerDict = json.loads(reply[1])
             for id, addr in peerDict.items():
-                print "Peer %s: ID:%s repAddr:%s" % (self._id, id, addr)
+                log.debug("Peer %s: ID:%s repAddr:%s", self._id, id, addr)
         reply = self._makeRequest(["BUCKETS"])
         self._ownedBuckets = set(json.loads(reply[1]))
         for prefix in self._ownedBuckets:
             if prefix in self._node._table.ownedBuckets():
                 keysReply = self._makeRequest(["KEYS", str(prefix)])
-                print keysReply
+                log.debug(str(keysReply))
                 keysDict = json.loads(keysReply[2])
                 for key, timestamp in keysDict.items():
                     try:
@@ -55,7 +57,7 @@ class Peer(object):
                         getReply = self._makeRequest(["GET", str(key)])
                         if self._node._table.putValue(str(key), getReply[2], float(getReply[3])):
                             self._node._pubUpdate(str(key))
-        print "Peer %s initialized" % (self._id,)
+        log.info("Peer %s initialized", self._id)
         self.__initialized = True
     
     def _makeRequest(self, req):

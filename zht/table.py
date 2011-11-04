@@ -5,6 +5,8 @@ from functools import total_ordering
 from time import time
 import collections
 import hashlib
+import logging
+log = logging.getLogger('zht.table')
 
 def _hex_hash(value):
     """
@@ -245,11 +247,11 @@ class TableEntry(object):
         :return: `True` if the update was accepted, `False` otherwise.
         """
         if self._timestamp < timestamp or self._timestamp is None:
-            print "New value:%s" % (value,)
+            log.debug("Key:'%s' New value:'%s'", self._key, value)
             self._value = value
             self._timestamp = timestamp
             return True
         else:
-            print "Ignored write, self:%s passed:%s" % (self._timestamp, timestamp)
+            log.debug("Key:'%s' Ignored write, self:%s passed:%s", self._key, self._timestamp, timestamp)
             return False
 

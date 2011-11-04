@@ -66,6 +66,7 @@ class ZHTCmd(Cmd):
     """
     def __init__(self, ctx, identity):
         self._control = ZHTControl(ctx, identity)
+        self.identity = identity
         Cmd.__init__(self)
         self._setPrompt()
 

@@ -6,6 +6,8 @@ from gevent.pool import Pool
 from table import Table
 from peer import Peer
 import json
+import logging
+log = logging.getLogger('zht.node')
 
 class Node(object):
     """
@@ -139,7 +141,7 @@ class Node(object):
 
         :param m: The request to handle.
         """
-        print m
+        log.debug(str(m))
         i = 0
         while m[i] != "":
             i += 1
@@ -148,23 +150,23 @@ class Node(object):
         reply = None
         if msg[0] == "PEER":
             peerInfo = (msg[1], msg[2], msg[3])
-            print "Recieved PEER request: identity:%s  REP:%s  PUB:%s" % peerInfo
+            log.debug("Recieved PEER request: identity:%s  REP:%s  PUB:%s", *peerInfo)
             reply = envelope + ["PEER", self._id, self._pubAddr]
             self._subConnect(peerInfo[2])
             self._peers[peerInfo[0]] = Peer(self, peerInfo[0], peerInfo[1], peerInfo[2], self._reqConnect(peerInfo[1]))
         elif msg[0] == "PEERS":
-            print "Recieved PEERS request"
+            log.debug("Recieved PEERS request")
             reply = envelope
             reply.append("PEERS")
             reply.append(json.dumps(dict(((ident, peer._repAddr) for ident, peer in self._peers.items()))))
         elif msg[0] == "BUCKETS":
-            print "Recieved BUCKETS request"
+            log.debug("Recieved BUCKETS request")
             reply = envelope + ["BUCKETS", json.dumps(self._table.ownedBuckets())]
         elif msg[0] == "KEYS":
-            print "Recieved KEYS request for bucket '%s'" % (msg[1],)
+            log.debug("Recieved KEYS request for bucket '%s'" % (msg[1],))
             reply = envelope + ["KEYS", msg[1], json.dumps(self._table.getKeySet(msg[1], includeTimestamp=True))]
         elif msg[0] == "GET":
-            print "Recieved GET request for key '%s'" % (msg[1],)
+            log.debug("Recieved GET request for key '%s'", msg[1])
             try:
                 entry = self._table.getValue(msg[1])
                 reply = envelope + ["GET", msg[1], entry._value, repr(entry._timestamp)]
@@ -172,7 +174,7 @@ class Node(object):
                 reply = ["ERROR", "KeyError", "GET", msg[1]]
         else:
             reply = envelope + ["ECHO"] + msg
-        print "REPLY: %s" % (reply,)
+        log.debug("REPLY: %s", reply)
         self._rep.send_multipart(reply)
 
     def _pubUpdate(self, key):
@@ -200,9 +202,9 @@ class Node(object):
 
         :param m: The message to handle.
         """
-        print "SUB: Recieved %s" % (m,)
+        log.debug("SUB: Recieved %s", m)
         if m[0][:7] == 'UPDATE|':
-            print "UPDATE key:%s value:%s timestamp:%s" % (m[1], m[2], m[3])
+            log.debug("UPDATE key:%s value:%s timestamp:%s", m[1], m[2], m[3])
             if self._table.putValue(m[1], m[2], float(m[3])):
                 self._pubUpdate(m[1])
 
