@@ -14,6 +14,7 @@ Contents:
    DHT
    RequestProtocol
    TableAlgorithm
+   changes
    api/zht
 
 Indices and tables
