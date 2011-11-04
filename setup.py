@@ -1,8 +1,9 @@
 from setuptools import setup
+from zht.version import packageVersion
 
 setup(
     name='ZHT',
-    version='0.0.1a1',
+    version=packageVersion,
     author='Michael Larsen',
     author_email='mike.gh.larsen@gmail.com',
     packages=['zht'],

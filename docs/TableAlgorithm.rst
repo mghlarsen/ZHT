@@ -1,6 +1,9 @@
-# Overview of Table operation #
+===========================
+Overview of Table operation
+=========================== 
 
-## Underlying Assumptions / Correctness Caveats ##
+Underlying Assumptions / Correctness Caveats
+============================================
 
 While trying to devise a simple way to keep values consistent, it became clear that total consistency would come at an excessive cost
 to simplicity and performance. If performance is suficiently good, inconsistencies should be fairly uncommon and most applications
