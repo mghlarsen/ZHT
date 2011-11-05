@@ -1,10 +1,10 @@
-Release v0.0.1 (in development)
-===============================
+Release v0.0.1 (2011-11-05) -- Second Development Release
+=========================================================
  * Added Documentation
  * Added Basic unit tests
 
-Release v0.0.1a1 (2011-10-16) -- Initial Release
-================================================
+Release v0.0.1a1 (2011-10-16) -- Initial Dev Release
+====================================================
  * Naive PUB/SUB updating
  * Basic Bucket synchronization
 
