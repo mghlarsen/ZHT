@@ -1,0 +1,371 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zht.table – ZHT Table Implementation &mdash; ZHT 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="ZHT 0.0.1 documentation" href="../index.html" />
+    <link rel="up" title="zht Package – ZHT Namespace" href="zht.html" />
+    <link rel="next" title="zht.shell – ZHT Shell Implementation" href="zht.shell.html" />
+    <link rel="prev" title="zht.peer – ZHT Peer Implementation" href="zht.peer.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.shell.html" title="zht.shell – ZHT Shell Implementation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="zht.peer.html" title="zht.peer – ZHT Peer Implementation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="zht.html" accesskey="U"><tt class="docutils literal docutils literal docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-zht.table">
+<span id="zht-table-zht-table-implementation"></span><h1><a class="reference internal" href="#module-zht.table" title="zht.table"><tt class="xref py py-mod docutils literal"><span class="pre">zht.table</span></tt></a> &#8211; ZHT Table Implementation<a class="headerlink" href="#module-zht.table" title="Permalink to this headline">¶</a></h1>
+<p>The Table is responsible for actually storing values.</p>
+<dl class="class">
+<dt id="zht.table.Bucket">
+<em class="property">class </em><tt class="descclassname">zht.table.</tt><tt class="descname">Bucket</tt><big>(</big><em>prefix</em>, <em>owned</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Bucket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Bucket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Construct a new Bucket instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>prefix</strong> &#8211; The prefix of this Bucket.</li>
+<li><strong>owned</strong> &#8211; <cite>True</cite> if this Bucket is actually owned by this table, <cite>False</cite> otherwise.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="zht.table.Bucket._generateSplitPrefixes">
+<tt class="descname">_generateSplitPrefixes</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Bucket._generateSplitPrefixes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Bucket._generateSplitPrefixes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate all prefixes that are 1 digit longer than this Bucket&#8217;s prefix, that start with this Bucket&#8217;s prefix.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Bucket.getValue">
+<tt class="descname">getValue</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Bucket.getValue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Bucket.getValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the <a class="reference internal" href="#zht.table.TableEntry" title="zht.table.TableEntry"><tt class="xref py py-class docutils literal"><span class="pre">TableEntry</span></tt></a> stored under the given key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The key to look under.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The <a class="reference internal" href="#zht.table.TableEntry" title="zht.table.TableEntry"><tt class="xref py py-class docutils literal"><span class="pre">TableEntry</span></tt></a> stored under <cite>key</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Bucket.putValue">
+<tt class="descname">putValue</tt><big>(</big><em>key</em>, <em>value</em>, <em>timestamp</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Bucket.putValue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Bucket.putValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the value stored under the given key.</p>
+<p>Stores with the given timestamp, unless the current timestamp for that entry is later.
+:param key: The key to store under.
+:param value: The value to store.
+:param timestamp: The time of this store.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Bucket.split">
+<tt class="descname">split</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Bucket.split"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Bucket.split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a set of new Buckets with a prefix that is 1 digit longer, containing all entries in this Bucket.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zht.table.Table">
+<em class="property">class </em><tt class="descclassname">zht.table.</tt><tt class="descname">Table</tt><big>(</big><em>prefixLength=1</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Construct a new Table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>prefixLength</strong> &#8211; The initial hash prefix length to use.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="zht.table.Table._generatePrefixes">
+<tt class="descname">_generatePrefixes</tt><big>(</big><em>prefixLength=None</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table._generatePrefixes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table._generatePrefixes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a generator that will return all possible hash prefixes of a given length.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>prefixLength</strong> &#8211; The prefix length to generate. If <cite>None</cite>, defaults to the Table&#8217;s current prefix length.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Table._getKeyBucket">
+<tt class="descname">_getKeyBucket</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table._getKeyBucket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table._getKeyBucket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bucket that the given key would be stored in.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The key to search for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The <a class="reference internal" href="#zht.table.Bucket" title="zht.table.Bucket"><tt class="xref py py-class docutils literal"><span class="pre">Bucket</span></tt></a> that the key would be stored in.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Table._getKeyHashPrefix">
+<tt class="descname">_getKeyHashPrefix</tt><big>(</big><em>key</em>, <em>prefixLength=None</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table._getKeyHashPrefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table._getKeyHashPrefix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the hash prefix for the given key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>key</strong> &#8211; The key to hash.</li>
+<li><strong>prefixLength</strong> &#8211; The prefix length to generate. If <cite>None</cite>, defaults to the Table&#8217;s current prefix length.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The hex digest of the key, truncated to <cite>prefixLength</cite> digits.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Table.getKeySet">
+<tt class="descname">getKeySet</tt><big>(</big><em>prefix</em>, <em>includeTimestamp</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table.getKeySet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table.getKeySet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the set of keys for a given prefix.</p>
+<p><strong>CAVEAT</strong>: This method&#8217;s implementation is incomplete. If too short of a prefix is given, it will return
+nothing. includeTimestamp is also currently ignored.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>prefix</strong> &#8211; The prefix to look under. Currently, this will be truncated to the current prefix length.</li>
+<li><strong>includeTimestamp</strong> &#8211; <strong>Currently Unused</strong> Return only keys modified after this timestamp.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt> containing all keys stored under the given prefix, with their timestamps.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Table.getValue">
+<tt class="descname">getValue</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table.getValue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table.getValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value stored for the given key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The key to search for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The value stored for <cite>key</cite></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raise :</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">NotImplemented</span></tt> if this key&#8217;s bucket isn&#8217;t owned by the table.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raise :</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">KeyError</span></tt> if this key&#8217;s bucket is owned by the table, but the key hasn&#8217;t had a value stored.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Table.ownedBuckets">
+<tt class="descname">ownedBuckets</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table.ownedBuckets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table.ownedBuckets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the list of buckets that this Table actually owns (in no particular order).
+:return: a <tt class="xref py py-class docutils literal"><span class="pre">list</span></tt> of the buckets owned by this Table.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.table.Table.putValue">
+<tt class="descname">putValue</tt><big>(</big><em>key</em>, <em>value</em>, <em>timestamp</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#Table.putValue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.Table.putValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store the given value under the given key, with timestamp.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>key</strong> &#8211; The key to store under.</li>
+<li><strong>value</strong> &#8211; The value to store.</li>
+<li><strong>timestamp</strong> &#8211; The time associated with this store. If a store with a later timestamp has already
+occurred, this store will be ignored.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zht.table.TableEntry">
+<em class="property">class </em><tt class="descclassname">zht.table.</tt><tt class="descname">TableEntry</tt><big>(</big><em>key</em>, <em>value=None</em>, <em>timestamp=None</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#TableEntry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.TableEntry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Construct a new TableEntry object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>key</strong> &#8211; The key for this TableEntry.</li>
+<li><strong>value</strong> &#8211; The initial value for this TableEntry.</li>
+<li><strong>timestamp</strong> &#8211; The initial timestamp for this TableEntry.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="zht.table.TableEntry.putValue">
+<tt class="descname">putValue</tt><big>(</big><em>value</em>, <em>timestamp</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#TableEntry.putValue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table.TableEntry.putValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update this TableEntry&#8217;s value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>value</strong> &#8211; The value to store.</li>
+<li><strong>timestamp</strong> &#8211; The timestamp associated with this store. If the timestamp is before the current timestamp
+this method does nothing.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><cite>True</cite> if the update was accepted, <cite>False</cite> otherwise.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="zht.table._hex_hash">
+<tt class="descclassname">zht.table.</tt><tt class="descname">_hex_hash</tt><big>(</big><em>value</em><big>)</big><a class="reference internal" href="../_modules/zht/table.html#_hex_hash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.table._hex_hash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a SHA1 hex digest.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; The value to hash.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="zht.peer.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">zht.peer</span></tt> &#8211; ZHT Peer Implementation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zht.shell.html"
+                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">zht.shell</span></tt> &#8211; ZHT Shell Implementation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/zht.table.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.shell.html" title="zht.shell – ZHT Shell Implementation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="zht.peer.html" title="zht.peer – ZHT Peer Implementation"
+             >previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.1 documentation</a> &raquo;</li>
+          <li><a href="zht.html" ><tt class="docutils literal docutils literal docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>
