@@ -1,3 +1,6 @@
+"""
+Node implementation. A node is the fundamental unit of the collective ZHT system.
+"""
 from gevent_zeromq import zmq
 from gevent.pool import Pool
 from table import Table
@@ -5,6 +8,16 @@ from peer import Peer
 import json
 
 class Node(object):
+    """
+    Construct a new :class:`Node`.
+
+    :param identity: The identity string of this Node.
+    :param repAddr: The ZMQ address to bind the REP socket to.
+    :param pubAddr: The ZMQ address to bind the PUB socket to.
+    :param ctx: The ZMQ Context object to operate from.
+    :param poolSize: The size of the greenlet pool this Node will operate from.
+
+    """
     def __init__(self, identity, repAddr, pubAddr, ctx=None, poolSize=200):
         self._greenletPool = Pool(poolSize)
         self._id = identity
@@ -26,23 +39,56 @@ class Node(object):
         self._controlSock.bind('ipc://.zhtnode-control-' + identity)
 
     def spawn(self, f, *args, **kwargs):
+        """
+        Spawn a new greenlet in this Node's pool
+
+        :param f: A callable that will be called from the new greenlet.
+        :param args: Argument list to call f with.
+        :param kwargs: Keyword arguments to call f with.
+
+        """
         return self._greenletPool.spawn(f, *args, **kwargs)
 
     def _subConnect(self, addr):
+        """
+        Connect this Node's SUB socket to an address.
+
+        :param addr: The ZMQ address of the PUB socket to connect to.
+
+        """
         self._sub.connect(addr)
 
     def _reqConnect(self, addr):
+        """
+        Return a new REQ socket connected to the given address.
+
+        :param addr" The ZMQ address of the REP socket to connect to.
+
+        """
         sock = self._ctx.socket(zmq.REQ)
         sock.setsockopt(zmq.IDENTITY, "%s:REQ:%s" % (self._id, addr))
         sock.connect(addr)
         return sock
 
     def start(self):
+        """
+        Start Node operations.
+
+        This method spawns off new greenlets to handle various control messages.
+        """
         self.spawn(self._handleRep)
         self.spawn(self._handleSub)
         self.spawn(self._handleControl)
 
     def connect(self, addr):
+        """
+        Connect to a Peer.
+
+        :param addr: The ZMQ address of the Peer's REP socket.
+
+        This will create a new peer and add it to this Node's peer table. A synchronize operation will
+        happen in a spawned greenlet.
+        """
         requestSock = self._reqConnect(addr)
         requestSock.send_multipart(["PEER", self._id, self._repAddr, self._pubAddr])
         reply = requestSock.recv_multipart()
@@ -50,6 +96,9 @@ class Node(object):
         self._subConnect(reply[2])
 
     def _handleControl(self):
+        """
+        Handle commands given over the control socket.
+        """
         while True:
             m = self._controlSock.recv_multipart()
             if m[0] == 'EOF':
@@ -75,11 +124,21 @@ class Node(object):
                 self._controlSock.send(['ERR', 'UNKNOWN COMMAND'] + m)
 
     def _handleRep(self):
+        """
+        Handle requests recieved over the REP socket.
+
+        Each request is handled in a spawned greenlet.
+        """
         while True:
             m = self._rep.recv_multipart()
             self.spawn(self._handleRepMessage, m)
 
     def _handleRepMessage(self, m):
+        """
+        Handle an individual request recieved over the REP socket.
+
+        :param m: The request to handle.
+        """
         print m
         i = 0
         while m[i] != "":
@@ -117,15 +176,30 @@ class Node(object):
         self._rep.send_multipart(reply)
 
     def _pubUpdate(self, key):
+        """
+        Send an update message over the PUB socket for the given key.
+
+        :param key: The key to give an update for.
+        """
         entry = self._table.getValue(key)
         self._pub.send_multipart(["UPDATE|" + entry._hash, key, entry._value, repr(entry._timestamp)])
 
     def _handleSub(self):
+        """
+        Handle messages recieved over the SUB socket.
+
+        Each message is handled in a spawned greenlet.
+        """
         while True:
             m = self._sub.recv_multipart()
             self.spawn(self._handleSubMessage, m)
 
     def _handleSubMessage(self, m):
+        """
+        Handle an individual message recieved over the SUB socket.
+
+        :param m: The message to handle.
+        """
         print "SUB: Recieved %s" % (m,)
         if m[0][:7] == 'UPDATE|':
             print "UPDATE key:%s value:%s timestamp:%s" % (m[1], m[2], m[3])
