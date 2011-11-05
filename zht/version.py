@@ -6,5 +6,5 @@ without worrying that something would break.
     This is the current package version, as a string.
 """
 
-packageVersion = '0.0.1'
+packageVersion = '0.0.2dev'
 

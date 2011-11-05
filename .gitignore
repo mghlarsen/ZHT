@@ -4,6 +4,7 @@ src/*
 bin/*
 lib/*
 include/*
+man/*
 socks/*
 dist/*
 MANIFEST
