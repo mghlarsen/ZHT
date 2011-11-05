@@ -4,6 +4,7 @@
 
 .. automodule:: zht.peer
    :members:
+   :private-members:
    :undoc-members:
    :show-inheritance:
 

@@ -4,6 +4,7 @@
 
 .. automodule:: zht.shell
    :members:
+   :private-members:
    :undoc-members:
    :show-inheritance:
 
