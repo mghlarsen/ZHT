@@ -1,0 +1,10 @@
+Jinja2>=2.6
+Pygments>=1.4
+Sphinx>=1.1.2
+coverage>=3.5.1
+docutils>=0.8.1
+gevent>=0.13.6
+gevent-zeromq>=0.2.0
+-e hg+https://bitbucket.org/snaury/greenlet#egg=greenlet
+nose>=1.1.2
+pyzmq>=2.1.10
