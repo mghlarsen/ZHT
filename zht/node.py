@@ -156,7 +156,7 @@ class Node(object):
             print "Recieved PEERS request"
             reply = envelope
             reply.append("PEERS")
-            reply.append(json.dumps(dict(((ident, peer._reqAddr) for ident, peer in self._peers.items()))))
+            reply.append(json.dumps(dict(((ident, peer._repAddr) for ident, peer in self._peers.items()))))
         elif msg[0] == "BUCKETS":
             print "Recieved BUCKETS request"
             reply = envelope + ["BUCKETS", json.dumps(self._table.ownedBuckets())]

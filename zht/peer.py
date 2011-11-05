@@ -1,10 +1,25 @@
+"""
+Peers are the outside entities that each Node communicates with.
+"""
 import json
 
 class Peer(object):
-    def __init__(self, node, identity, reqAddr, pubAddr, sock):
+    """
+    Construct a new Peer instance.
+
+    The synchronization process will also happen, but will take place in a spawned greenlet.
+
+    :param node: The local Node that owns this Peer object.
+    :param identity: The identity string of the remote Peer.
+    :param repAddr: The ZMQ address of the remote Peer's REP socket.
+    :param pubAddr: The ZMQ address of the remote Peer's PUB socket.
+    :param sock: A ZMQ REQ socket connected to the remote Peer's REP socket.
+     
+    """
+    def __init__(self, node, identity, repAddr, pubAddr, sock):
         self._node = node
         self._id = identity
-        self._reqAddr = reqAddr
+        self._repAddr = repAddr
         self._pubAddr = pubAddr
         self._sock = sock
         self._partitions = set()
@@ -12,6 +27,11 @@ class Peer(object):
         self._node.spawn(self._initState)
 
     def _initState(self):
+        """
+        Initialize the internal state of this Peer object.
+
+        Any Bucket synchronization that needs to happen will occur during this initialization process. 
+        """
         reply = self._makeRequest(["PEERS"])
         if reply[0] == "PEERS":
             peerDict = json.loads(reply[1])
@@ -39,6 +59,12 @@ class Peer(object):
         self.__initialized = True
     
     def _makeRequest(self, req):
+        """
+        Make a request to this Peer.
+
+        :param req: The request to send.
+        :return: The response to the request.
+        """
         self._sock.send_multipart(req)
         return self._sock.recv_multipart()
 
