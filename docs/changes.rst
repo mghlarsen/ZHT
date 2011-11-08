@@ -6,4 +6,4 @@
 Changes in ZHT
 ==============
 
-.. include:: ../CHANGES
+.. include:: ../CHANGES.rst
