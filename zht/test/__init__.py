@@ -3,6 +3,7 @@
 #
 import zmq
 import gevent
+import os
 from zht.shell import ZHTControl
 from zht.node import Node
 from unittest import TestCase
@@ -18,6 +19,8 @@ def initNode(identity, connectAddr):
 def closeNode(node, control):
     control.EOF()
     node._greenletPool.join()
+    os.remove('testSock%sREP' % node._id)
+    os.remove('testSock%sPUB' % node._id)
 
 def clearWaitingGreenlets(n=10):
     """
