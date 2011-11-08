@@ -10,6 +10,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   copyright
+   license
    DHT
    RequestProtocol
    TableAlgorithm
