@@ -1,3 +1,6 @@
+# 
+# Copyright 2011 Michael Larsen <mike.gh.larsen@gmail.com>
+#
 """
 Implement a Command-Line interface to ZHT.
 

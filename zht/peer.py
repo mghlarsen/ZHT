@@ -1,3 +1,6 @@
+# 
+# Copyright 2011 Michael Larsen <mike.gh.larsen@gmail.com>
+#
 """
 Peers are the outside entities that each Node communicates with.
 """

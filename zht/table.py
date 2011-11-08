@@ -1,3 +1,6 @@
+# 
+# Copyright 2011 Michael Larsen <mike.gh.larsen@gmail.com>
+#
 """
 The Table is responsible for actually storing values.
 """

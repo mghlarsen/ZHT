@@ -1,3 +1,6 @@
+# 
+# Copyright 2011 Michael Larsen <mike.gh.larsen@gmail.com>
+#
 """
 Node implementation. A node is the fundamental unit of the collective ZHT system.
 """
