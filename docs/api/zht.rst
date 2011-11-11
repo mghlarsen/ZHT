@@ -10,6 +10,7 @@
 
 .. toctree::
 
+    zht.config
     zht.node
     zht.peer
     zht.table
