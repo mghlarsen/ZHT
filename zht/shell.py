@@ -8,11 +8,13 @@ Implement a Command-Line interface to ZHT.
 
 :class:`ZHTCmd` implements a basic command shell interface for controlling a ZHT node.
 """
-import argparse
 from multiprocessing import Process
 from cmd import Cmd
 import zmq
+from config import ZHTConfig
 from node import Node
+import logging
+log = logging.getLogger('zht.shell')
 
 class ZHTControl(object):
     """
@@ -130,21 +132,15 @@ def runNode(identity, bindAddrREP, bindAddrPUB, connectAddr):
     """
     n = Node(identity, bindAddrREP, bindAddrPUB)
     n.start()
-    if connectAddr != "":
+    if connectAddr != "" and not connectAddr is None:
         n.spawn(n.connect, connectAddr)
     n._greenletPool.join()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("DHT Node")
-    parser.add_argument("--bindAddrREP", "-r")
-    parser.add_argument("--bindAddrPUB", "-p")
-    parser.add_argument("--connectAddr", "-c", default="", required=False)
-    parser.add_argument("--identity", "-i", default="", required=False)
-    parser.add_argument("--message", "-m", default="TEST", required=False)
-    args = parser.parse_args()
-
-    p = Process(target=runNode, args=(args.identity, args.bindAddrREP, args.bindAddrPUB, args.connectAddr))
+    config = ZHTConfig()
+    log.debug("ID: %(identity)s, REP: %(bindAddrREP)s, PUB: %(bindAddrPUB)s, CONN: %(connectAddr)s" % config)
+    p = Process(target=runNode, args=(config.identity, config.bindAddrREP, config.bindAddrPUB, config.connectAddr))
     p.start()
-    ZHTCmd(zmq.Context.instance(), args.identity).cmdloop()
+    ZHTCmd(zmq.Context.instance(), config.identity).cmdloop()
     p.join()
 
