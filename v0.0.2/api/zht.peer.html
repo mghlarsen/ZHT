@@ -1,0 +1,169 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zht.peer – ZHT Peer Implementation &mdash; ZHT 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="../copyright.html" />
+    <link rel="top" title="ZHT 0.0.2 documentation" href="../index.html" />
+    <link rel="up" title="zht Package – ZHT Namespace" href="zht.html" />
+    <link rel="next" title="zht.table – ZHT Table Implementation" href="zht.table.html" />
+    <link rel="prev" title="zht.node – ZHT Node Implementation" href="zht.node.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.table.html" title="zht.table – ZHT Table Implementation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="zht.node.html" title="zht.node – ZHT Node Implementation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="zht.html" accesskey="U"><tt class="docutils literal docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-zht.peer">
+<span id="zht-peer-zht-peer-implementation"></span><h1><a class="reference internal" href="#module-zht.peer" title="zht.peer"><tt class="xref py py-mod docutils literal"><span class="pre">zht.peer</span></tt></a> &#8211; ZHT Peer Implementation<a class="headerlink" href="#module-zht.peer" title="Permalink to this headline">¶</a></h1>
+<p>Peers are the outside entities that each Node communicates with.</p>
+<dl class="class">
+<dt id="zht.peer.Peer">
+<em class="property">class </em><tt class="descclassname">zht.peer.</tt><tt class="descname">Peer</tt><big>(</big><em>node</em>, <em>identity</em>, <em>repAddr</em>, <em>pubAddr</em>, <em>sock</em><big>)</big><a class="reference internal" href="../_modules/zht/peer.html#Peer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.peer.Peer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Construct a new Peer instance.</p>
+<p>The synchronization process will also happen, but will take place in a spawned greenlet.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>node</strong> &#8211; The local Node that owns this Peer object.</li>
+<li><strong>identity</strong> &#8211; The identity string of the remote Peer.</li>
+<li><strong>repAddr</strong> &#8211; The ZMQ address of the remote Peer&#8217;s REP socket.</li>
+<li><strong>pubAddr</strong> &#8211; The ZMQ address of the remote Peer&#8217;s PUB socket.</li>
+<li><strong>sock</strong> &#8211; A ZMQ REQ socket connected to the remote Peer&#8217;s REP socket.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="zht.peer.Peer._initState">
+<tt class="descname">_initState</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/peer.html#Peer._initState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.peer.Peer._initState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the internal state of this Peer object.</p>
+<p>Any Bucket synchronization that needs to happen will occur during this initialization process.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.peer.Peer._makeRequest">
+<tt class="descname">_makeRequest</tt><big>(</big><em>req</em><big>)</big><a class="reference internal" href="../_modules/zht/peer.html#Peer._makeRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.peer.Peer._makeRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a request to this Peer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>req</strong> &#8211; The request to send.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The response to the request.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="zht.node.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">zht.node</span></tt> &#8211; ZHT Node Implementation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zht.table.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">zht.table</span></tt> &#8211; ZHT Table Implementation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/zht.peer.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.table.html" title="zht.table – ZHT Table Implementation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="zht.node.html" title="zht.node – ZHT Node Implementation"
+             >previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="zht.html" ><tt class="docutils literal docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="../copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

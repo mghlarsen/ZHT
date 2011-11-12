@@ -1,0 +1,290 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zht.shell – ZHT Shell Implementation &mdash; ZHT 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="../copyright.html" />
+    <link rel="top" title="ZHT 0.0.2 documentation" href="../index.html" />
+    <link rel="up" title="zht Package – ZHT Namespace" href="zht.html" />
+    <link rel="next" title="zht.version – ZHT Version Information" href="zht.version.html" />
+    <link rel="prev" title="zht.table – ZHT Table Implementation" href="zht.table.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.version.html" title="zht.version – ZHT Version Information"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="zht.table.html" title="zht.table – ZHT Table Implementation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="zht.html" accesskey="U"><tt class="docutils literal docutils literal docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-zht.shell">
+<span id="zht-shell-zht-shell-implementation"></span><h1><a class="reference internal" href="#module-zht.shell" title="zht.shell"><tt class="xref py py-mod docutils literal"><span class="pre">zht.shell</span></tt></a> &#8211; ZHT Shell Implementation<a class="headerlink" href="#module-zht.shell" title="Permalink to this headline">¶</a></h1>
+<p>Implement a Command-Line interface to ZHT.</p>
+<p><a class="reference internal" href="#zht.shell.ZHTControl" title="zht.shell.ZHTControl"><tt class="xref py py-class docutils literal"><span class="pre">ZHTControl</span></tt></a> provides a programmatic interface for controlling a ZHT node by control socket.</p>
+<p><a class="reference internal" href="#zht.shell.ZHTCmd" title="zht.shell.ZHTCmd"><tt class="xref py py-class docutils literal"><span class="pre">ZHTCmd</span></tt></a> implements a basic command shell interface for controlling a ZHT node.</p>
+<dl class="class">
+<dt id="zht.shell.ZHTCmd">
+<em class="property">class </em><tt class="descclassname">zht.shell.</tt><tt class="descname">ZHTCmd</tt><big>(</big><em>ctx</em>, <em>identity</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTCmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTCmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">cmd.Cmd</span></tt></p>
+<p>Construct a new ZHT Command Shell.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ctx</strong> &#8211; The ZMQ context to communicate with.</li>
+<li><strong>identity</strong> &#8211; The identity string of the <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="zht.shell.ZHTCmd._setPrompt">
+<tt class="descname">_setPrompt</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTCmd._setPrompt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTCmd._setPrompt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the prompt string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTCmd.do_EOF">
+<tt class="descname">do_EOF</tt><big>(</big><em>line</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTCmd.do_EOF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTCmd.do_EOF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle a command line EOF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>line</strong> &#8211; Not actually sure what this would be...</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTCmd.do_connect">
+<tt class="descname">do_connect</tt><big>(</big><em>line</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTCmd.do_connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTCmd.do_connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle a command line connect.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>line</strong> &#8211; The command arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTCmd.do_get">
+<tt class="descname">do_get</tt><big>(</big><em>line</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTCmd.do_get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTCmd.do_get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle a command line get.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>line</strong> &#8211; The command arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTCmd.do_put">
+<tt class="descname">do_put</tt><big>(</big><em>line</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTCmd.do_put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTCmd.do_put" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle a command line put.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>line</strong> &#8211; The command arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTCmd.emptyline">
+<tt class="descname">emptyline</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTCmd.emptyline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTCmd.emptyline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle an empty line.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="zht.shell.ZHTControl">
+<em class="property">class </em><tt class="descclassname">zht.shell.</tt><tt class="descname">ZHTControl</tt><big>(</big><em>ctx</em>, <em>identity</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTControl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTControl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Construct a new ZHTControl.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ctx</strong> &#8211; The ZMQ context to communicate over.</li>
+<li><strong>identity</strong> &#8211; The identity string of the node to control.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="zht.shell.ZHTControl.EOF">
+<tt class="descname">EOF</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTControl.EOF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTControl.EOF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a shutdown command to the <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTControl._ZHTControl__recv">
+<tt class="descname">_ZHTControl__recv</tt><big>(</big><big>)</big><a class="headerlink" href="#zht.shell.ZHTControl._ZHTControl__recv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTControl._ZHTControl__req">
+<tt class="descname">_ZHTControl__req</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zht.shell.ZHTControl._ZHTControl__req" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTControl._ZHTControl__send">
+<tt class="descname">_ZHTControl__send</tt><big>(</big><em>msg</em><big>)</big><a class="headerlink" href="#zht.shell.ZHTControl._ZHTControl__send" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTControl.connect">
+<tt class="descname">connect</tt><big>(</big><em>addrs</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTControl.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTControl.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a connect command to the <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTControl.get">
+<tt class="descname">get</tt><big>(</big><em>keys</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTControl.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTControl.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a get command to the <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.shell.ZHTControl.put">
+<tt class="descname">put</tt><big>(</big><em>key</em>, <em>value</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#ZHTControl.put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.ZHTControl.put" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a put command to the <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="zht.shell.runNode">
+<tt class="descclassname">zht.shell.</tt><tt class="descname">runNode</tt><big>(</big><em>identity</em>, <em>bindAddrREP</em>, <em>bindAddrPUB</em>, <em>connectAddr</em><big>)</big><a class="reference internal" href="../_modules/zht/shell.html#runNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.shell.runNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start a ZHT Node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>identity</strong> &#8211; The identity string to use for this node.</li>
+<li><strong>bindAddrREP</strong> &#8211; The address to bind the <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt>&#8216;s REP socket to.</li>
+<li><strong>bindAddrPUB</strong> &#8211; The address to binf the <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt>&#8216;s PUB socket to.</li>
+<li><strong>connectAddr</strong> &#8211; The address of a <tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt> to connect to.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="zht.table.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">zht.table</span></tt> &#8211; ZHT Table Implementation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zht.version.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">zht.version</span></tt> &#8211; ZHT Version Information</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/zht.shell.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.version.html" title="zht.version – ZHT Version Information"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="zht.table.html" title="zht.table – ZHT Table Implementation"
+             >previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="zht.html" ><tt class="docutils literal docutils literal docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="../copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

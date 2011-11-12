@@ -1,0 +1,241 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zht.shell &mdash; ZHT 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="../../copyright.html" />
+    <link rel="top" title="ZHT 0.0.2 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">ZHT 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for zht.shell</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Implement a Command-Line interface to ZHT.</span>
+
+<span class="sd">:class:`ZHTControl` provides a programmatic interface for controlling a ZHT node by control socket.</span>
+
+<span class="sd">:class:`ZHTCmd` implements a basic command shell interface for controlling a ZHT node.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Process</span>
+<span class="kn">from</span> <span class="nn">cmd</span> <span class="kn">import</span> <span class="n">Cmd</span>
+<span class="kn">import</span> <span class="nn">zmq</span>
+<span class="kn">from</span> <span class="nn">node</span> <span class="kn">import</span> <span class="n">Node</span>
+
+<div class="viewcode-block" id="ZHTControl"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTControl">[docs]</a><span class="k">class</span> <span class="nc">ZHTControl</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a new ZHTControl.</span>
+
+<span class="sd">    :param ctx: The ZMQ context to communicate over.</span>
+<span class="sd">    :param identity: The identity string of the node to control.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">identity</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">REQ</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&#39;ipc://.zhtnode-control-&#39;</span> <span class="o">+</span> <span class="n">identity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identity</span> <span class="o">=</span> <span class="n">identity</span>
+    
+    <span class="k">def</span> <span class="nf">__send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__recv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">__req</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__recv</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ZHTControl.EOF"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTControl.EOF">[docs]</a>    <span class="k">def</span> <span class="nf">EOF</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a shutdown command to the :class:`Node`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__send</span><span class="p">([</span><span class="s">&#39;EOF&#39;</span><span class="p">])</span>
+    </div>
+<div class="viewcode-block" id="ZHTControl.connect"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTControl.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addrs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a connect command to the :class:`Node`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__req</span><span class="p">([</span><span class="s">&#39;CONNECT&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">addrs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ZHTControl.get"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTControl.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a get command to the :class:`Node`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__req</span><span class="p">([</span><span class="s">&#39;GET&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">keys</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ZHTControl.put"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTControl.put">[docs]</a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send a put command to the :class:`Node`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__req</span><span class="p">([</span><span class="s">&#39;PUT&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">])</span>
+</div></div>
+<div class="viewcode-block" id="ZHTCmd"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTCmd">[docs]</a><span class="k">class</span> <span class="nc">ZHTCmd</span><span class="p">(</span><span class="n">Cmd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a new ZHT Command Shell.</span>
+
+<span class="sd">    :param ctx: The ZMQ context to communicate with.</span>
+<span class="sd">    :param identity: The identity string of the :class:`Node`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">identity</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span> <span class="o">=</span> <span class="n">ZHTControl</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">identity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identity</span> <span class="o">=</span> <span class="n">identity</span>
+        <span class="n">Cmd</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setPrompt</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ZHTCmd._setPrompt"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTCmd._setPrompt">[docs]</a>    <span class="k">def</span> <span class="nf">_setPrompt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the prompt string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span> <span class="o">=</span> <span class="s">&#39;[ZHT:</span><span class="si">%(identity)s</span><span class="s">] &#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span>
+</div>
+<div class="viewcode-block" id="ZHTCmd.do_EOF"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTCmd.do_EOF">[docs]</a>    <span class="k">def</span> <span class="nf">do_EOF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle a command line EOF.</span>
+
+<span class="sd">        :param line: Not actually sure what this would be...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">EOF</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s">&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="ZHTCmd.do_connect"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTCmd.do_connect">[docs]</a>    <span class="k">def</span> <span class="nf">do_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle a command line connect.</span>
+
+<span class="sd">        :param line: The command arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="ZHTCmd.do_get"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTCmd.do_get">[docs]</a>    <span class="k">def</span> <span class="nf">do_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle a command line get.</span>
+
+<span class="sd">        :param line: The command arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="ZHTCmd.do_put"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTCmd.do_put">[docs]</a>    <span class="k">def</span> <span class="nf">do_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle a command line put.</span>
+
+<span class="sd">        :param line: The command arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="o">*</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="ZHTCmd.emptyline"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.ZHTCmd.emptyline">[docs]</a>    <span class="k">def</span> <span class="nf">emptyline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle an empty line.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</div></div>
+<div class="viewcode-block" id="runNode"><a class="viewcode-back" href="../../api/zht.shell.html#zht.shell.runNode">[docs]</a><span class="k">def</span> <span class="nf">runNode</span><span class="p">(</span><span class="n">identity</span><span class="p">,</span> <span class="n">bindAddrREP</span><span class="p">,</span> <span class="n">bindAddrPUB</span><span class="p">,</span> <span class="n">connectAddr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Start a ZHT Node.</span>
+
+<span class="sd">    :param identity: The identity string to use for this node.</span>
+<span class="sd">    :param bindAddrREP: The address to bind the :class:`Node`&#39;s REP socket to.</span>
+<span class="sd">    :param bindAddrPUB: The address to binf the :class:`Node`&#39;s PUB socket to.</span>
+<span class="sd">    :param connectAddr: The address of a :class:`Node` to connect to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">identity</span><span class="p">,</span> <span class="n">bindAddrREP</span><span class="p">,</span> <span class="n">bindAddrPUB</span><span class="p">)</span>
+    <span class="n">n</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">connectAddr</span> <span class="o">!=</span> <span class="s">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">n</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">connect</span><span class="p">,</span> <span class="n">connectAddr</span><span class="p">)</span>
+    <span class="n">n</span><span class="o">.</span><span class="n">_greenletPool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s">&quot;DHT Node&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;--bindAddrREP&quot;</span><span class="p">,</span> <span class="s">&quot;-r&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;--bindAddrPUB&quot;</span><span class="p">,</span> <span class="s">&quot;-p&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;--connectAddr&quot;</span><span class="p">,</span> <span class="s">&quot;-c&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;--identity&quot;</span><span class="p">,</span> <span class="s">&quot;-i&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&quot;--message&quot;</span><span class="p">,</span> <span class="s">&quot;-m&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&quot;TEST&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">runNode</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">bindAddrREP</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">bindAddrPUB</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">connectAddr</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">ZHTCmd</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">instance</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">identity</span><span class="p">)</span><span class="o">.</span><span class="n">cmdloop</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">ZHT 0.0.2 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="../../copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

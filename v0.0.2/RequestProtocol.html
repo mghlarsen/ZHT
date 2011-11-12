@@ -1,0 +1,188 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Protocol For REQ/XREP socket pair &mdash; ZHT 0.0.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="copyright.html" />
+    <link rel="top" title="ZHT 0.0.2 documentation" href="index.html" />
+    <link rel="next" title="Overview of Table operation" href="TableAlgorithm.html" />
+    <link rel="prev" title="Distributed Hash Table" href="DHT.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="TableAlgorithm.html" title="Overview of Table operation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="DHT.html" title="Distributed Hash Table"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">ZHT 0.0.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="protocol-for-req-xrep-socket-pair">
+<h1>Protocol For REQ/XREP socket pair<a class="headerlink" href="#protocol-for-req-xrep-socket-pair" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="motivation">
+<h2>Motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h2>
+<p>The general idea of the REQ/XREP socket pair in the DHT is to provide point-to-point coordination and control information, as well as
+to provide a means of doing lookups for partitions not available locally.</p>
+</div>
+<div class="section" id="notation">
+<h2>Notation<a class="headerlink" href="#notation" title="Permalink to this headline">¶</a></h2>
+<p>To make parsing easy, DHT uses the multipart functionality of ZeroMQ heavily. By convention, each part of a request or response will
+be separated by | characters. Static fields are simply included in normal type, and fields are in italics. For example, this is the
+format of the ECHO reply:</p>
+<p>ECHO | [ <em>request[0]</em> | ... ]</p>
+</div>
+<div class="section" id="requests">
+<h2>Requests<a class="headerlink" href="#requests" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="connection-establishment">
+<h3>Connection Establishment<a class="headerlink" href="#connection-establishment" title="Permalink to this headline">¶</a></h3>
+<p>PEER | <em>node_id</em> | <em>XREP_addr</em> | <em>PUB_addr</em></p>
+<p>Notifies this node that a node with the provided information has connected to it.</p>
+</div>
+<div class="section" id="network-discovery">
+<h3>Network Discovery<a class="headerlink" href="#network-discovery" title="Permalink to this headline">¶</a></h3>
+<p>PEERS</p>
+<p>Requests a list of the nodes this node is connected to.</p>
+</div>
+<div class="section" id="partition-discovery">
+<h3>Partition Discovery<a class="headerlink" href="#partition-discovery" title="Permalink to this headline">¶</a></h3>
+<p>PARTITIONS</p>
+<p>Requests a list of the partitions this node keeps locally.</p>
+</div>
+</div>
+<div class="section" id="replies">
+<h2>Replies<a class="headerlink" href="#replies" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Connection Establishment<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>PEER | <em>node_id</em> | <em>PUB_addr</em></p>
+<p>Give the node identity and PUB address of this node to the newly-connected node.</p>
+</div>
+<div class="section" id="id2">
+<h3>Network Discovery<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>PEERS | <em>peer_count</em> [ | <em>peer_id</em> | <em>peer_XREP_addr</em> | ... ]</p>
+<p>Return a list of known peers, with their identity and XREP addresses.</p>
+</div>
+<div class="section" id="id3">
+<h3>Partition Discovery<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>PARTITIONS | <em>partition_count</em> [ | <em>partition_prefix</em> | ... ]</p>
+<p>Return a list of the partitions this node keeps locally.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Protocol For REQ/XREP socket pair</a><ul>
+<li><a class="reference internal" href="#motivation">Motivation</a></li>
+<li><a class="reference internal" href="#notation">Notation</a></li>
+<li><a class="reference internal" href="#requests">Requests</a><ul>
+<li><a class="reference internal" href="#connection-establishment">Connection Establishment</a></li>
+<li><a class="reference internal" href="#network-discovery">Network Discovery</a></li>
+<li><a class="reference internal" href="#partition-discovery">Partition Discovery</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#replies">Replies</a><ul>
+<li><a class="reference internal" href="#id1">Connection Establishment</a></li>
+<li><a class="reference internal" href="#id2">Network Discovery</a></li>
+<li><a class="reference internal" href="#id3">Partition Discovery</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="DHT.html"
+                        title="previous chapter">Distributed Hash Table</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="TableAlgorithm.html"
+                        title="next chapter">Overview of Table operation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/RequestProtocol.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="TableAlgorithm.html" title="Overview of Table operation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="DHT.html" title="Distributed Hash Table"
+             >previous</a> |</li>
+        <li><a href="index.html">ZHT 0.0.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>
