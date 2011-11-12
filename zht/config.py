@@ -14,6 +14,7 @@ _argParser.add_argument('--connectAddr', '-c', required=False)
 _argParser.add_argument('--identity', '-i', required=False)
 _argParser.add_argument('--config', '-C', default='.zhtrc', required=False)
 
+
 class ZHTConfig(ConfigParser.SafeConfigParser):
     """
     Get the configuration provided from config files and command-line arguments.
@@ -22,10 +23,11 @@ class ZHTConfig(ConfigParser.SafeConfigParser):
     as the command-line options.
     """
     def __init__(self, defaults=None, *args):
-        self.__defaults = defaults or dict()
-        self.__args = _argParser.parse_args(namespace=self.__defaults)
+        self.__defaults = defaults
+        self.__args = _argParser.parse_args()
         
-        super(ConfigParser.SafeConfigParser, self).__init__(self.__defaults, *args)
+        ConfigParser.SafeConfigParser.__init__(self, self.__defaults, *args)
+        self.read(self.__args.config)
 
     def __getattr__(self, attr):
         try:
@@ -41,7 +43,7 @@ class ZHTConfig(ConfigParser.SafeConfigParser):
 
     def __configLookup(self, attr):
         try:
-            return self.__config.get('zht', attr)
+            return self.get('zht', attr)
         except ConfigParser.NoOptionError:
             return None
 
