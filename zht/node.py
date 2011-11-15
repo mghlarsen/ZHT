@@ -71,7 +71,7 @@ class Node(object):
 
         """
         sock = self._ctx.socket(zmq.REQ)
-        sock.setsockopt(zmq.IDENTITY, "%s:REQ:%s" % (self._id, addr))
+        sock.setsockopt(zmq.IDENTITY, str("%s:REQ:%s" % (self._id, addr)))
         sock.connect(addr)
         return sock
 
@@ -97,8 +97,9 @@ class Node(object):
         requestSock = self._reqConnect(addr)
         requestSock.send_multipart(["PEER", self._id, self._repAddr, self._pubAddr])
         reply = requestSock.recv_multipart()
-        self._peers[reply[1]] = Peer(self, reply[1], addr, reply[2], requestSock)
-        self._subConnect(reply[2])
+        if reply[1] != self._id and not reply[1] in self._peers:
+            self._peers[reply[1]] = Peer(self, reply[1], addr, reply[2], requestSock)
+            self._subConnect(reply[2])
 
     def _handleControl(self):
         """

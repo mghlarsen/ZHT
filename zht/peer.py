@@ -42,6 +42,9 @@ class Peer(object):
             peerDict = json.loads(reply[1])
             for id, addr in peerDict.items():
                 log.debug("Peer %s: ID:%s repAddr:%s", self._id, id, addr)
+                if id != self._node._id and not id in self._node._peers:
+                    log.debug("Autopeering: connect to ID:'%s', addr:'%s'", id, addr)
+                    self._node.connect(addr)
         reply = self._makeRequest(["BUCKETS"])
         self._ownedBuckets = set(json.loads(reply[1]))
         for prefix in self._ownedBuckets:
