@@ -150,7 +150,11 @@ def runNode(identity, bindAddrREP, bindAddrPUB, connectAddr):
 if __name__ == "__main__":
     config = ZHTConfig()
     import logging.config
-    logging.config.fileConfig(config.loggingConfig)
+    try:
+        logging.config.fileConfig(config.loggingConfig)
+    except:
+        import warnings
+        warnings.warn("logging config file %s doesn't exist." % config.loggingConfig)
     log = logging.getLogger('zht.shell')
     
     log.info("ID: %(identity)s, REP: %(bindAddrREP)s, PUB: %(bindAddrPUB)s, CONN: %(connectAddr)s" % config)
