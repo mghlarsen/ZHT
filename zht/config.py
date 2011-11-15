@@ -13,6 +13,7 @@ _argParser.add_argument('--bindAddrPUB', '-p')
 _argParser.add_argument('--connectAddr', '-c', required=False)
 _argParser.add_argument('--identity', '-i', required=False)
 _argParser.add_argument('--config', '-C', default='.zhtrc', required=False)
+_argParser.add_argument('--loggingConfig', '-l', default='.zhtloggingrc', required=False)
 
 
 class ZHTConfig(ConfigParser.SafeConfigParser):
