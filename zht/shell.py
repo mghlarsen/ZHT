@@ -57,6 +57,12 @@ class ZHTControl(object):
         Send a put command to the :class:`Node`
         """
         return self.__req(['PUT', key, value])
+    
+    def peers(self):
+        """
+        Send a peer command to the :class:`Node`
+        """
+        return self.__req(['PEERS'])
 
 class ZHTCmd(Cmd):
     """
@@ -110,6 +116,14 @@ class ZHTCmd(Cmd):
         :param line: The command arguments.
         """
         print self._control.put(*line.split(None, 1))
+
+    def do_peers(self, line):
+        """
+        Handle a command line peers.
+
+        :param line: The command arguments.
+        """
+        print self._control.peers()
 
     def emptyline(self):
         """

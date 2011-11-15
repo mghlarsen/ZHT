@@ -125,6 +125,8 @@ class Node(object):
                 self._table[m[1]] = m[2]
                 self._controlSock.send_multipart(['OK', m[1], m[2]])
                 self._pubUpdate(m[1])
+            elif m[0] == 'PEERS':
+                self._controlSock.send_multipart(['PEERS'] + list(self._peers.keys()))
             else:
                 self._controlSock.send(['ERR', 'UNKNOWN COMMAND'] + m)
 
