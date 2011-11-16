@@ -152,9 +152,9 @@ if __name__ == "__main__":
     import logging.config
     try:
         logging.config.fileConfig(config.loggingConfig)
-    except:
+    except Exception as e:
         import warnings
-        warnings.warn("logging config file %s doesn't exist." % config.loggingConfig)
+        warnings.warn("logging config file %s doesn't exist: %s" % (config.loggingConfig, e))
     log = logging.getLogger('zht.shell')
     
     log.info("ID: %(identity)s, REP: %(bindAddrREP)s, PUB: %(bindAddrPUB)s, CONN: %(connectAddr)s" % config)
