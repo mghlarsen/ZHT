@@ -40,8 +40,10 @@ class Node(object):
         self._pub = self._ctx.socket(zmq.PUB)
         self._pub.setsockopt(zmq.IDENTITY, self._id + ":PUB")
         self._pub.bind(pubAddr)
+        self.__peersConnected = set()
         self._sub = self._ctx.socket(zmq.SUB)
         self._sub.setsockopt(zmq.SUBSCRIBE, "")
+        self.__subConnected = set()
         self._req = self._ctx.socket(zmq.XREQ)
         self._peers = dict()
         self._table = Table()
@@ -67,6 +69,7 @@ class Node(object):
 
         """
         connLog.debug("_subConnect('%s')", addr)
+        self.__subConnected.add(addr)
         self._sub.connect(addr)
 
     def _reqConnect(self, addr):
@@ -101,6 +104,12 @@ class Node(object):
         This will create a new peer and add it to this Node's peer table. A synchronize operation will
         happen in a spawned greenlet.
         """
+        connLog.debug("start connect:'%s' peersConnected:'%s'", addr, self.__peersConnected)
+        if addr in self.__peersConnected:
+            connLog.debug("duplicate")
+            return
+        else:
+            self.__peersConnected.add(addr)
         requestSock = self._reqConnect(addr)
         requestSock.send_multipart(["PEER", self._id, self._repAddr, self._pubAddr])
         reply = requestSock.recv_multipart()
@@ -165,8 +174,9 @@ class Node(object):
             peerInfo = (msg[1], msg[2], msg[3])
             repLog.debug("Recieved PEER request: identity:%s  REP:%s  PUB:%s", *peerInfo)
             reply = envelope + ["PEER", self._id, self._pubAddr]
-            self._subConnect(peerInfo[2])
-            self._peers[peerInfo[0]] = Peer(self, peerInfo[0], peerInfo[1], peerInfo[2], self._reqConnect(peerInfo[1]))
+            if not peerInfo[0] in self._peers.keys():
+                self._subConnect(peerInfo[2])
+                self._peers[peerInfo[0]] = Peer(self, peerInfo[0], peerInfo[1], peerInfo[2], self._reqConnect(peerInfo[1]))
         elif msg[0] == "PEERS":
             repLog.debug("Recieved PEERS request")
             reply = envelope
