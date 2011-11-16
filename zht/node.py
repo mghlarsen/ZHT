@@ -6,6 +6,7 @@ Node implementation. A node is the fundamental unit of the collective ZHT system
 """
 from gevent_zeromq import zmq
 from gevent.pool import Pool
+from gevent import sleep
 from table import Table
 from peer import Peer
 import json
@@ -84,6 +85,7 @@ class Node(object):
         self.spawn(self._handleRep)
         self.spawn(self._handleSub)
         self.spawn(self._handleControl)
+        self.spawn(self._heartbeat)
 
     def connect(self, addr):
         """
@@ -202,6 +204,11 @@ class Node(object):
             m = self._sub.recv_multipart()
             self.spawn(self._handleSubMessage, m)
 
+    def _heartbeat(self):
+        while True:
+            self._pub.send_multipart(['HEARTBEAT', self._id])
+            sleep(30)
+
     def _handleSubMessage(self, m):
         """
         Handle an individual message recieved over the SUB socket.
@@ -213,4 +220,7 @@ class Node(object):
             log.debug("UPDATE key:%s value:%s timestamp:%s", m[1], m[2], m[3])
             if self._table.putValue(m[1], m[2], float(m[3])):
                 self._pubUpdate(m[1])
+        elif m[0] == 'HEARTBEAT':
+            id = m[1]
+            log.debug("HEARTBEAT: id:'%s'", id)
 
