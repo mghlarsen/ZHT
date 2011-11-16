@@ -116,6 +116,7 @@ class Node(object):
         if reply[1] != self._id and not reply[1] in self._peers:
             self._peers[reply[1]] = Peer(self, reply[1], addr, reply[2], requestSock)
             self._subConnect(reply[2])
+            self._pubPeer(reply[1], addr)
 
     def _handleControl(self):
         """
@@ -177,6 +178,7 @@ class Node(object):
             if not peerInfo[0] in self._peers.keys():
                 self._subConnect(peerInfo[2])
                 self._peers[peerInfo[0]] = Peer(self, peerInfo[0], peerInfo[1], peerInfo[2], self._reqConnect(peerInfo[1]))
+                self._pubPeer(peerInfo[0], peerInfo[1])
         elif msg[0] == "PEERS":
             repLog.debug("Recieved PEERS request")
             reply = envelope
@@ -209,6 +211,9 @@ class Node(object):
         entry = self._table.getValue(key)
         self._pub.send_multipart(["UPDATE|" + entry._hash, key, entry._value, repr(entry._timestamp)])
 
+    def _pubPeer(self, id, addr):
+        self._pub.send_multipart(["PEER", id, addr])
+
     def _handleSub(self):
         """
         Handle messages recieved over the SUB socket.
@@ -238,4 +243,10 @@ class Node(object):
         elif m[0] == 'HEARTBEAT':
             id = m[1]
             subLog.debug("HEARTBEAT: id:'%s'", id)
+        elif m[0] == 'PEER':
+            id = m[1]
+            addr = m[2]
+            subLog.debug("PEER: id:'%s', addr:'%s'", id, addr)
+            if not id in self._peers.keys() and id != self._id:
+                self.connect(addr)
 
