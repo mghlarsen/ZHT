@@ -1,3 +1,7 @@
+Release v0.0.4_ (????-??-??) -- Fifth Development Release
+=========================================================
+
+
 Release v0.0.3_ (2011-11-17) -- Fourth Development Release
 ==========================================================
  * Add autopeering (from both peer connection synchronization and PUB updates) 
