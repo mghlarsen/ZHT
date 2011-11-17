@@ -23,9 +23,9 @@ class ZHTConfig(ConfigParser.SafeConfigParser):
     Note that currently the configuration lookup uses the "zht" section of the config file and must have the same key
     as the command-line options.
     """
-    def __init__(self, defaults=None, *args):
+    def __init__(self, cliArgs=None, defaults=None, *args):
         self.__defaults = defaults
-        self.__args = _argParser.parse_args()
+        self.__args = _argParser.parse_args(cliArgs)
         
         ConfigParser.SafeConfigParser.__init__(self, self.__defaults, *args)
         self.read(self.__args.config)
