@@ -19,9 +19,9 @@ OR::
 
 (You can change the part after the @ to be any tag/branch/revision).
 
-WARNING: ZHT is in a really early state, and I can't guarantee that it won't blow up your house/computer/municipality,
-much less that it will work properly. You may have to install a more-recent-than-latest-release version of greenlet
-(there's a version that works for me in `requirements.txt`, although YMMV).
+**WARNING**: ZHT is in a really early state, and I can't guarantee that it won't blow up your computer, house, or
+municipality, much less that it will work properly. You may have to install a more-recent-than-latest-release version
+of greenlet (there's a version that works for me in `requirements.txt`, although YMMV).
 
 Or you can just check out ZHT and run from the project directory, since it's not really built to be used by anything
 yet. All the packages you'll want can be installed by running::
