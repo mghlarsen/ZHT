@@ -109,3 +109,15 @@ class Test3NodeZHT(TestCase):
         self.assertEqual(self.cControl.get(['asdf']), ['qwer'])
         self.assertEqual(self.cControl.get(['zxcv']), ['poiu'])
 
+    def testAutopeer(self):
+        self.assertEqual(self.aControl.connect(['ipc://testSockbREP']), ['OK'])
+        clearWaitingGreenlets(12)
+        self.assertItemsEqual(self.aControl.peers()[1:], ['b'])
+        self.assertItemsEqual(self.bControl.peers()[1:], ['a'])
+        self.assertItemsEqual(self.cControl.peers()[1:], [])
+        self.assertEqual(self.bControl.connect(['ipc://testSockcREP']), ['OK'])
+        clearWaitingGreenlets(12)
+        self.assertItemsEqual(self.aControl.peers()[1:], ['b', 'c'])
+        self.assertItemsEqual(self.bControl.peers()[1:], ['a', 'c'])
+        self.assertItemsEqual(self.cControl.peers()[1:], ['a', 'b'])
+
