@@ -1,5 +1,11 @@
+Release v0.0.3_ (2011-11-17) -- Fourth Development Release
+==========================================================
+ * Add autopeering (from both peer connection synchronization and PUB updates) 
+ * Expand README
+.. _v0.0.3: https://github.com/mghlarsen/ZHT/tarball/v0.0.3
+
 Release v0.0.2_ (2011-11-11) -- Third Development Release
-=================================================================
+=========================================================
  * Add copyright and licensing information
  * Environment cleanups
  * File-Based Configuration
