@@ -212,7 +212,7 @@ class Node(object):
         self._pub.send_multipart(["UPDATE|" + entry._hash, key, entry._value, repr(entry._timestamp)])
 
     def _pubPeer(self, id, addr):
-        self._pub.send_multipart(["PEER", id, addr])
+        self._pub.send_multipart(["PEER", str(id), str(addr)])
 
     def _handleSub(self):
         """

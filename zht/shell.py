@@ -11,6 +11,7 @@ Implement a Command-Line interface to ZHT.
 from config import ZHTConfig
 import logging
 from cmd import Cmd
+import zmq
 
 class ZHTControl(object):
     """
@@ -163,7 +164,6 @@ if __name__ == "__main__":
     p = Process(target=runNode, args=(config.identity, config.bindAddrREP, config.bindAddrPUB, config.connectAddr))
     p.start()
     
-    import zmq
     ZHTCmd(zmq.Context.instance(), config.identity).cmdloop()
     p.join()
 
