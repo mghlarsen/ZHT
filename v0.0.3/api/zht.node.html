@@ -1,0 +1,280 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zht.node – ZHT Node Implementation &mdash; ZHT 0.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="../copyright.html" />
+    <link rel="top" title="ZHT 0.0.3 documentation" href="../index.html" />
+    <link rel="up" title="zht Package – ZHT Namespace" href="zht.html" />
+    <link rel="next" title="zht.peer – ZHT Peer Implementation" href="zht.peer.html" />
+    <link rel="prev" title="zht.config – ZHT Runtime Configuration" href="zht.config.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.peer.html" title="zht.peer – ZHT Peer Implementation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="zht.config.html" title="zht.config – ZHT Runtime Configuration"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="zht.html" accesskey="U"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-zht.node">
+<span id="zht-node-zht-node-implementation"></span><h1><a class="reference internal" href="#module-zht.node" title="zht.node"><tt class="xref py py-mod docutils literal"><span class="pre">zht.node</span></tt></a> &#8211; ZHT Node Implementation<a class="headerlink" href="#module-zht.node" title="Permalink to this headline">¶</a></h1>
+<p>Node implementation. A node is the fundamental unit of the collective ZHT system.</p>
+<dl class="class">
+<dt id="zht.node.Node">
+<em class="property">class </em><tt class="descclassname">zht.node.</tt><tt class="descname">Node</tt><big>(</big><em>identity</em>, <em>repAddr</em>, <em>pubAddr</em>, <em>ctx=None</em>, <em>poolSize=200</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Construct a new <a class="reference internal" href="#zht.node.Node" title="zht.node.Node"><tt class="xref py py-class docutils literal"><span class="pre">Node</span></tt></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>identity</strong> &#8211; The identity string of this Node.</li>
+<li><strong>repAddr</strong> &#8211; The ZMQ address to bind the REP socket to.</li>
+<li><strong>pubAddr</strong> &#8211; The ZMQ address to bind the PUB socket to.</li>
+<li><strong>ctx</strong> &#8211; The ZMQ Context object to operate from.</li>
+<li><strong>poolSize</strong> &#8211; The size of the greenlet pool this Node will operate from.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="zht.node.Node._handleControl">
+<tt class="descname">_handleControl</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._handleControl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._handleControl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle commands given over the control socket.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._handleRep">
+<tt class="descname">_handleRep</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._handleRep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._handleRep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle requests recieved over the REP socket.</p>
+<p>Each request is handled in a spawned greenlet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._handleRepMessage">
+<tt class="descname">_handleRepMessage</tt><big>(</big><em>m</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._handleRepMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._handleRepMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle an individual request recieved over the REP socket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>m</strong> &#8211; The request to handle.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._handleSub">
+<tt class="descname">_handleSub</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._handleSub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._handleSub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle messages recieved over the SUB socket.</p>
+<p>Each message is handled in a spawned greenlet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._handleSubMessage">
+<tt class="descname">_handleSubMessage</tt><big>(</big><em>m</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._handleSubMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._handleSubMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle an individual message recieved over the SUB socket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>m</strong> &#8211; The message to handle.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._heartbeat">
+<tt class="descname">_heartbeat</tt><big>(</big><big>)</big><a class="headerlink" href="#zht.node.Node._heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._pubPeer">
+<tt class="descname">_pubPeer</tt><big>(</big><em>id</em>, <em>addr</em><big>)</big><a class="headerlink" href="#zht.node.Node._pubPeer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._pubUpdate">
+<tt class="descname">_pubUpdate</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._pubUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._pubUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send an update message over the PUB socket for the given key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The key to give an update for.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._reqConnect">
+<tt class="descname">_reqConnect</tt><big>(</big><em>addr</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._reqConnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._reqConnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new REQ socket connected to the given address.</p>
+<p>:param addr&#8221; The ZMQ address of the REP socket to connect to.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node._subConnect">
+<tt class="descname">_subConnect</tt><big>(</big><em>addr</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node._subConnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node._subConnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect this Node&#8217;s SUB socket to an address.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> &#8211; The ZMQ address of the PUB socket to connect to.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node.connect">
+<tt class="descname">connect</tt><big>(</big><em>addr</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to a Peer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> &#8211; The ZMQ address of the Peer&#8217;s REP socket.</td>
+</tr>
+</tbody>
+</table>
+<p>This will create a new peer and add it to this Node&#8217;s peer table. A synchronize operation will
+happen in a spawned greenlet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node.spawn">
+<tt class="descname">spawn</tt><big>(</big><em>f</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node.spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spawn a new greenlet in this Node&#8217;s pool</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>f</strong> &#8211; A callable that will be called from the new greenlet.</li>
+<li><strong>args</strong> &#8211; Argument list to call f with.</li>
+<li><strong>kwargs</strong> &#8211; Keyword arguments to call f with.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="zht.node.Node.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/zht/node.html#Node.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#zht.node.Node.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start Node operations.</p>
+<p>This method spawns off new greenlets to handle various control messages.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="zht.config.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">zht.config</span></tt> &#8211; ZHT Runtime Configuration</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zht.peer.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">zht.peer</span></tt> &#8211; ZHT Peer Implementation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/zht.node.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zht.peer.html" title="zht.peer – ZHT Peer Implementation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="zht.config.html" title="zht.config – ZHT Runtime Configuration"
+             >previous</a> |</li>
+        <li><a href="../index.html">ZHT 0.0.3 documentation</a> &raquo;</li>
+          <li><a href="zht.html" ><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">zht</span></tt> Package &#8211; ZHT Namespace</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="../copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>
