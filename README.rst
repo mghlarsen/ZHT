@@ -10,12 +10,12 @@ Installation
 
 With `pip` (you most likely want to do this in a virtualenv)::
 
-   pip install https://github.com/mghlarsen/ZHT/tarball/v0.0.2
+   pip install https://github.com/mghlarsen/ZHT/tarball/v0.0.3
 
-(You can replace v0.0.2 with any other tag)
+(You can replace v0.0.3 with any other tag)
 OR::
 
-   pip install -e git+git://github.com/mghlarsen/ZHT.git@v0.0.2#egg=ZHT
+   pip install -e git+git://github.com/mghlarsen/ZHT.git@v0.0.3#egg=ZHT
 
 (You can change the part after the @ to be any tag/branch/revision).
 
