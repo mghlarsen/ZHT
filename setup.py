@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from setuptools import setup
 from zht.version import packageVersion
 
