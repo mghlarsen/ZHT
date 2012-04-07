@@ -1,6 +1,8 @@
-Release v0.0.4_ (????-??-??) -- Fifth Development Release
+Release v0.0.4_ (2012-04-07) -- Fifth Development Release
 =========================================================
-
+ * Test coverage on config module
+ * Remote Queries
+.. _v0.0.3: https://github.com/mghlarsen/ZHT/tarball/v0.0.4
 
 Release v0.0.3_ (2011-11-17) -- Fourth Development Release
 ==========================================================

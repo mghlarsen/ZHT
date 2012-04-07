@@ -10,25 +10,24 @@ Installation
 
 With `pip` (you most likely want to do this in a virtualenv)::
 
-   pip install https://github.com/mghlarsen/ZHT/tarball/v0.0.3
+   pip install https://github.com/mghlarsen/ZHT/tarball/v0.0.4
 
-(You can replace v0.0.3 with any other tag)
+(You can replace v0.0.4 with any other tag)
 OR::
 
-   pip install -e git+git://github.com/mghlarsen/ZHT.git@v0.0.3#egg=ZHT
+   pip install -e git+git://github.com/mghlarsen/ZHT.git@v0.0.4#egg=ZHT
 
 (You can change the part after the @ to be any tag/branch/revision).
 
 **WARNING**: ZHT is in a really early state, and I can't guarantee that it won't blow up your computer, house, or
-municipality, much less that it will work properly. You may have to install a more-recent-than-latest-release version
-of greenlet (there's a version that works for me in `requirements.txt`, although YMMV).
+municipality, much less that it will work properly.
 
-Or you can just check out ZHT and run from the project directory, since it's not really built to be used by anything
-yet. All the packages you'll want can be installed by running::
+All the packages you'll want for development can be installed by running::
 
    pip install -r requirements.txt
 
-As long as you have a new-enough libzeromq (for pyzmq) and libevent (for gevent), this should work fine.
+As long as you have a new-enough libzeromq (for pyzmq) and libevent (for gevent) with devel packages, this should
+work fine.
 
 Usage
 -----
