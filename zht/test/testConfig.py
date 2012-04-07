@@ -9,7 +9,7 @@ class TestConfig(TestCase):
         pass
 
     def testFileLoading(self):
-        args = ['-c', 'zht/test/zhtrc']
+        args = ['-C', 'zht/test/zhtrc']
         c = ZHTConfig(args)
         self.assertEqual(c.identity, 'a')
         self.assertEqual(c.bindAddrREP, 'ipc://socks/aREP')
