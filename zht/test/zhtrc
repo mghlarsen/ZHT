@@ -1,0 +1,5 @@
+[zht]
+identity = a
+bindAddrREP = ipc://socks/aREP
+bindAddrPUB = ipc://socks/aPUB
+
