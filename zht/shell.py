@@ -53,6 +53,12 @@ class ZHTControl(object):
         """
         return self.__req(['GET'] + keys)
 
+    def rget(self, keys):
+        """
+        Send a rget command to the :class:`Node`.
+        """
+        return self.__req(['RGET'] + keys)
+
     def put(self, key, value):
         """
         Send a put command to the :class:`Node`
@@ -109,6 +115,14 @@ class ZHTCmd(Cmd):
         :param line: The command arguments.
         """
         print self._control.get(line.split())
+
+    def do_rget(self, line):
+        """
+        Handle a command line rget.
+
+        :param line: The command arguments.
+        """
+        print self._control.rget(line.split())
 
     def do_put(self, line):
         """

@@ -11,7 +11,7 @@ import hashlib
 import logging
 log = logging.getLogger('zht.table')
 
-def _hex_hash(value):
+def hex_hash(value):
     """
     Return a SHA1 hex digest.
 
@@ -49,7 +49,7 @@ class Table(object):
         :param prefixLength: The prefix length to generate. If `None`, defaults to the Table's current prefix length.
         :return: The hex digest of the key, truncated to `prefixLength` digits.
         """
-        return _hex_hash(key)[:prefixLength or self._prefixLength]
+        return hex_hash(key)[:prefixLength or self._prefixLength]
 
     def _getKeyBucket(self, key):
         """
@@ -218,7 +218,7 @@ class TableEntry(object):
     """
     def __init__(self, key, value=None, timestamp=None):
         self._key = key
-        self._hash = _hex_hash(key)
+        self._hash = hex_hash(key)
         self._value = value
         self._timestamp = timestamp
 

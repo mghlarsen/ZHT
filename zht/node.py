@@ -11,6 +11,7 @@ from table import Table
 from peer import Peer
 import json
 import logging
+from zht.table import hex_hash
 log = logging.getLogger('zht.node')
 pubLog = log.getChild('pub')
 subLog = log.getChild('sub')
@@ -139,6 +140,11 @@ class Node(object):
                     except KeyError:
                         r.append('KeyError')
                 self._controlSock.send_multipart(r)
+            elif m[0] == 'RGET':
+                r = []
+                for key in m[1:]:
+                    r.append(self._rget(key))
+                self._controlSock.send_multipart(r)
             elif m[0] == 'PUT':
                 self._table[m[1]] = m[2]
                 self._controlSock.send_multipart(['OK', m[1], m[2]])
@@ -147,6 +153,14 @@ class Node(object):
                 self._controlSock.send_multipart(['PEERS'] + list(self._peers.keys()))
             else:
                 self._controlSock.send(['ERR', 'UNKNOWN COMMAND'] + m)
+
+    def _rget(self, key):
+        h = hex_hash(key)
+        for pName in self._peers.keys():
+            peer = self._peers[pName]
+            for b in peer._ownedBuckets:
+                if h.startswith(b):
+                    return peer._makeRequest(["GET", str(key)])[2] 
 
     def _handleRep(self):
         """
