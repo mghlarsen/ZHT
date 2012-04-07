@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zht.table &mdash; ZHT 0.0.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="../../copyright.html" />
+    <link rel="top" title="ZHT 0.0.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">ZHT 0.0.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for zht.table</h1><div class="highlight"><pre>
+<span class="c"># </span>
+<span class="c"># Copyright 2011 Michael Larsen &lt;mike.gh.larsen@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The Table is responsible for actually storing values.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">total_ordering</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;zht.table&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="hex_hash"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.hex_hash">[docs]</a><span class="k">def</span> <span class="nf">hex_hash</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a SHA1 hex digest.</span>
+
+<span class="sd">    :param value: The value to hash.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Table"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table">[docs]</a><span class="k">class</span> <span class="nc">Table</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a new Table.</span>
+
+<span class="sd">    :param prefixLength: The initial hash prefix length to use.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefixLength</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefixLength</span> <span class="o">=</span> <span class="n">prefixLength</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_owned</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generatePrefixes</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">Bucket</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_owned</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="Table._generatePrefixes"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table._generatePrefixes">[docs]</a>    <span class="k">def</span> <span class="nf">_generatePrefixes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefixLength</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a generator that will return all possible hash prefixes of a given length.</span>
+
+<span class="sd">        :param prefixLength: The prefix length to generate. If `None`, defaults to the Table&#39;s current prefix length.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%0*x</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">prefixLength</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefixLength</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">prefixLength</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefixLength</span><span class="p">))))</span>
+</div>
+<div class="viewcode-block" id="Table._getKeyHashPrefix"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table._getKeyHashPrefix">[docs]</a>    <span class="k">def</span> <span class="nf">_getKeyHashPrefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">prefixLength</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the hash prefix for the given key.</span>
+
+<span class="sd">        :param key: The key to hash.</span>
+<span class="sd">        :param prefixLength: The prefix length to generate. If `None`, defaults to the Table&#39;s current prefix length.</span>
+<span class="sd">        :return: The hex digest of the key, truncated to `prefixLength` digits.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">hex_hash</span><span class="p">(</span><span class="n">key</span><span class="p">)[:</span><span class="n">prefixLength</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefixLength</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Table._getKeyBucket"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table._getKeyBucket">[docs]</a>    <span class="k">def</span> <span class="nf">_getKeyBucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the bucket that the given key would be stored in.</span>
+
+<span class="sd">        :param key: The key to search for.</span>
+<span class="sd">        :return: The :class:`Bucket` that the key would be stored in.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_getKeyHashPrefix</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span>
+</div>
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the value stored for the given key.</span>
+
+<span class="sd">        :param key: The key to search for.</span>
+<span class="sd">        :return: The value stored for `key`</span>
+<span class="sd">        :raise: :class:`NotImplemented` if this key&#39;s bucket isn&#39;t owned by the table.</span>
+<span class="sd">        :raise: :class:`KeyError` if this key&#39;s bucket is owned by the table, but the key hasn&#39;t had a value stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getKeyBucket</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value stored for the given key. Uses the current time as the timestamp.</span>
+
+<span class="sd">        :param key: The key to store under.</span>
+<span class="sd">        :param value: The value to store for `key`</span>
+<span class="sd">        :raise: :class:`NotImplemented` if this key&#39;s bucket isn&#39;t owned by the table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_getKeyBucket</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="Table.putValue"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table.putValue">[docs]</a>    <span class="k">def</span> <span class="nf">putValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Store the given value under the given key, with timestamp.</span>
+
+<span class="sd">        :param key: The key to store under.</span>
+<span class="sd">        :param value: The value to store.</span>
+<span class="sd">        :param timestamp: The time associated with this store. If a store with a later timestamp has already</span>
+<span class="sd">            occurred, this store will be ignored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getKeyBucket</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">putValue</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Table.getValue"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table.getValue">[docs]</a>    <span class="k">def</span> <span class="nf">getValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the value stored for the given key.</span>
+
+<span class="sd">        :param key: The key to search for.</span>
+<span class="sd">        :return: The value stored for `key`</span>
+<span class="sd">        :raise: :class:`NotImplemented` if this key&#39;s bucket isn&#39;t owned by the table.</span>
+<span class="sd">        :raise: :class:`KeyError` if this key&#39;s bucket is owned by the table, but the key hasn&#39;t had a value stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getKeyBucket</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Table.getKeySet"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table.getKeySet">[docs]</a>    <span class="k">def</span> <span class="nf">getKeySet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">includeTimestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the set of keys for a given prefix.</span>
+
+<span class="sd">        **CAVEAT**: This method&#39;s implementation is incomplete. If too short of a prefix is given, it will return</span>
+<span class="sd">        nothing. includeTimestamp is also currently ignored.</span>
+
+<span class="sd">        :param prefix: The prefix to look under. Currently, this will be truncated to the current prefix length.</span>
+<span class="sd">        :param includeTimestamp: **Currently Unused** Return only keys modified after this timestamp.</span>
+<span class="sd">        :return: a :class:`dict` containing all keys stored under the given prefix, with their timestamps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefixLength</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefixLength</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Table.ownedBuckets"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Table.ownedBuckets">[docs]</a>    <span class="k">def</span> <span class="nf">ownedBuckets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the list of buckets that this Table actually owns (in no particular order).</span>
+<span class="sd">        :return: a :class:`list` of the buckets owned by this Table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_owned</span><span class="p">)</span>
+</div></div>
+<div class="viewcode-block" id="Bucket"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Bucket">[docs]</a><span class="k">class</span> <span class="nc">Bucket</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a new Bucket instance.</span>
+
+<span class="sd">    :param prefix: The prefix of this Bucket.</span>
+<span class="sd">    :param owned: `True` if this Bucket is actually owned by this table, `False` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">owned</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span> <span class="o">=</span> <span class="n">prefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_owned</span> <span class="o">=</span> <span class="n">owned</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the value stored under the given key.</span>
+
+<span class="sd">        :param key: The key to look under.</span>
+<span class="sd">        :return: The value stored under `key`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">_value</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value stored under the given key.</span>
+
+<span class="sd">        Stores with the current time as the timestamp.</span>
+
+<span class="sd">        :param key: The key to store under.</span>
+<span class="sd">        :param value: The value to store.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">putValue</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">time</span><span class="p">())</span>
+
+<div class="viewcode-block" id="Bucket.getValue"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Bucket.getValue">[docs]</a>    <span class="k">def</span> <span class="nf">getValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the :class:`TableEntry` stored under the given key.</span>
+
+<span class="sd">        :param key: The key to look under.</span>
+<span class="sd">        :return: The :class:`TableEntry` stored under `key`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_owned</span> <span class="ow">or</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span><span class="p">(</span><span class="s">&quot;Uncached Lookup not implemented.&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Bucket.putValue"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Bucket.putValue">[docs]</a>    <span class="k">def</span> <span class="nf">putValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the value stored under the given key.</span>
+
+<span class="sd">        Stores with the given timestamp, unless the current timestamp for that entry is later.</span>
+<span class="sd">        :param key: The key to store under.</span>
+<span class="sd">        :param value: The value to store.</span>
+<span class="sd">        :param timestamp: The time of this store.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_owned</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">putValue</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">TableEntry</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">NotImplemented</span><span class="p">(</span><span class="s">&quot;Unowned put not implemented.&quot;</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Bucket.split"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Bucket.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a set of new Buckets with a prefix that is 1 digit longer, containing all entries in this Bucket.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">newBuckets</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">newPrefix</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generateSplitPrefixes</span><span class="p">():</span>
+            <span class="n">newBuckets</span><span class="p">[</span><span class="n">newPrefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">Bucket</span><span class="p">(</span><span class="n">newPrefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_owned</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">newBuckets</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">_hash</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">_putValue</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">_key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">newBuckets</span>
+</div>
+<div class="viewcode-block" id="Bucket._generateSplitPrefixes"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.Bucket._generateSplitPrefixes">[docs]</a>    <span class="k">def</span> <span class="nf">_generateSplitPrefixes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate all prefixes that are 1 digit longer than this Bucket&#39;s prefix, that start with this Bucket&#39;s prefix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span> <span class="o">+</span> <span class="s">&quot;</span><span class="si">%1x</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
+</div></div>
+<span class="nd">@total_ordering</span>
+<div class="viewcode-block" id="TableEntry"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.TableEntry">[docs]</a><span class="k">class</span> <span class="nc">TableEntry</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a new TableEntry object.</span>
+
+<span class="sd">    :param key: The key for this TableEntry.</span>
+<span class="sd">    :param value: The initial value for this TableEntry.</span>
+<span class="sd">    :param timestamp: The initial timestamp for this TableEntry.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hash</span> <span class="o">=</span> <span class="n">hex_hash</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: `True` if this TableEntry&#39;s key is equal to the other object&#39;s key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_key</span>
+
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: `True` if this TableEntry&#39;s key is &quot;less than&quot; the other object&#39;s key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">_key</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The hash of this TableEntry&#39;s key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TableEntry.putValue"><a class="viewcode-back" href="../../api/zht.table.html#zht.table.TableEntry.putValue">[docs]</a>    <span class="k">def</span> <span class="nf">putValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update this TableEntry&#39;s value.</span>
+
+<span class="sd">        :param value: The value to store.</span>
+<span class="sd">        :param timestamp: The timestamp associated with this store. If the timestamp is before the current timestamp</span>
+<span class="sd">            this method does nothing.</span>
+<span class="sd">        :return: `True` if the update was accepted, `False` otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="o">&lt;</span> <span class="n">timestamp</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Key:&#39;</span><span class="si">%s</span><span class="s">&#39; New value:&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Key:&#39;</span><span class="si">%s</span><span class="s">&#39; Ignored write, self:</span><span class="si">%s</span><span class="s"> passed:</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">False</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">ZHT 0.0.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="../../copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

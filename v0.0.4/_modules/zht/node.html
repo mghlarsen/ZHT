@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>zht.node &mdash; ZHT 0.0.4 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="../../copyright.html" />
+    <link rel="top" title="ZHT 0.0.4 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">ZHT 0.0.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for zht.node</h1><div class="highlight"><pre>
+<span class="c"># </span>
+<span class="c"># Copyright 2011 Michael Larsen &lt;mike.gh.larsen@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Node implementation. A node is the fundamental unit of the collective ZHT system.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">gevent_zeromq</span> <span class="kn">import</span> <span class="n">zmq</span>
+<span class="kn">from</span> <span class="nn">gevent.pool</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span> <span class="nn">gevent</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">table</span> <span class="kn">import</span> <span class="n">Table</span>
+<span class="kn">from</span> <span class="nn">peer</span> <span class="kn">import</span> <span class="n">Peer</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">zht.table</span> <span class="kn">import</span> <span class="n">hex_hash</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;zht.node&#39;</span><span class="p">)</span>
+<span class="n">pubLog</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="s">&#39;pub&#39;</span><span class="p">)</span>
+<span class="n">subLog</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="s">&#39;sub&#39;</span><span class="p">)</span>
+<span class="n">connLog</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="s">&#39;connect&#39;</span><span class="p">)</span>
+<span class="n">repLog</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="s">&#39;rep&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Node"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a new :class:`Node`.</span>
+
+<span class="sd">    :param identity: The identity string of this Node.</span>
+<span class="sd">    :param repAddr: The ZMQ address to bind the REP socket to.</span>
+<span class="sd">    :param pubAddr: The ZMQ address to bind the PUB socket to.</span>
+<span class="sd">    :param ctx: The ZMQ Context object to operate from.</span>
+<span class="sd">    :param poolSize: The size of the greenlet pool this Node will operate from.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">repAddr</span><span class="p">,</span> <span class="n">pubAddr</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">poolSize</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_greenletPool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">poolSize</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="n">identity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_repAddr</span> <span class="o">=</span> <span class="n">repAddr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pubAddr</span> <span class="o">=</span> <span class="n">pubAddr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="o">=</span> <span class="n">ctx</span> <span class="ow">or</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">XREP</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rep</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">+</span> <span class="s">&quot;:REP&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rep</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">repAddr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">PUB</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pub</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">+</span> <span class="s">&quot;:PUB&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pub</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">pubAddr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__peersConnected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUB</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sub</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUBSCRIBE</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__subConnected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_req</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">XREQ</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">REP</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s">&#39;ipc://.zhtnode-control-&#39;</span> <span class="o">+</span> <span class="n">identity</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Node.spawn"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node.spawn">[docs]</a>    <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Spawn a new greenlet in this Node&#39;s pool</span>
+
+<span class="sd">        :param f: A callable that will be called from the new greenlet.</span>
+<span class="sd">        :param args: Argument list to call f with.</span>
+<span class="sd">        :param kwargs: Keyword arguments to call f with.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_greenletPool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._subConnect"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._subConnect">[docs]</a>    <span class="k">def</span> <span class="nf">_subConnect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Connect this Node&#39;s SUB socket to an address.</span>
+
+<span class="sd">        :param addr: The ZMQ address of the PUB socket to connect to.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">connLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;_subConnect(&#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__subConnected</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sub</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._reqConnect"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._reqConnect">[docs]</a>    <span class="k">def</span> <span class="nf">_reqConnect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a new REQ socket connected to the given address.</span>
+
+<span class="sd">        :param addr&quot; The ZMQ address of the REP socket to connect to.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">REQ</span><span class="p">)</span>
+        <span class="n">sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">:REQ:</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="n">addr</span><span class="p">)))</span>
+        <span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sock</span>
+</div>
+<div class="viewcode-block" id="Node.start"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Start Node operations.</span>
+
+<span class="sd">        This method spawns off new greenlets to handle various control messages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handleRep</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handleSub</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handleControl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_heartbeat</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node.connect"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Connect to a Peer.</span>
+
+<span class="sd">        :param addr: The ZMQ address of the Peer&#39;s REP socket.</span>
+
+<span class="sd">        This will create a new peer and add it to this Node&#39;s peer table. A synchronize operation will</span>
+<span class="sd">        happen in a spawned greenlet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">connLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;start connect:&#39;</span><span class="si">%s</span><span class="s">&#39; peersConnected:&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__peersConnected</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">addr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__peersConnected</span><span class="p">:</span>
+            <span class="n">connLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;duplicate&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__peersConnected</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">requestSock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reqConnect</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">requestSock</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="s">&quot;PEER&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repAddr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubAddr</span><span class="p">])</span>
+        <span class="n">reply</span> <span class="o">=</span> <span class="n">requestSock</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">reply</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">reply</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="p">[</span><span class="n">reply</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Peer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reply</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">addr</span><span class="p">,</span> <span class="n">reply</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">requestSock</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subConnect</span><span class="p">(</span><span class="n">reply</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pubPeer</span><span class="p">(</span><span class="n">reply</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">addr</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._handleControl"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._handleControl">[docs]</a>    <span class="k">def</span> <span class="nf">_handleControl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle commands given over the control socket.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;EOF&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_greenletPool</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;OK&#39;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;CONNECT&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_greenletPool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">,</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;OK&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;GET&#39;</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;KeyError&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;RGET&#39;</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                    <span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rget</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;PUT&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="s">&#39;OK&#39;</span><span class="p">,</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pubUpdate</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;PEERS&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="s">&#39;PEERS&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_controlSock</span><span class="o">.</span><span class="n">send</span><span class="p">([</span><span class="s">&#39;ERR&#39;</span><span class="p">,</span> <span class="s">&#39;UNKNOWN COMMAND&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">m</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._rget"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._rget">[docs]</a>    <span class="k">def</span> <span class="nf">_rget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">hex_hash</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pName</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">peer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="p">[</span><span class="n">pName</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">peer</span><span class="o">.</span><span class="n">_ownedBuckets</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">peer</span><span class="o">.</span><span class="n">_makeRequest</span><span class="p">([</span><span class="s">&quot;GET&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)])[</span><span class="mi">2</span><span class="p">]</span> 
+</div>
+<div class="viewcode-block" id="Node._handleRep"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._handleRep">[docs]</a>    <span class="k">def</span> <span class="nf">_handleRep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle requests recieved over the REP socket.</span>
+
+<span class="sd">        Each request is handled in a spawned greenlet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rep</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handleRepMessage</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._handleRepMessage"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._handleRepMessage">[docs]</a>    <span class="k">def</span> <span class="nf">_handleRepMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle an individual request recieved over the REP socket.</span>
+
+<span class="sd">        :param m: The request to handle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">envelope</span> <span class="o">=</span> <span class="n">m</span><span class="p">[:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">reply</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;PEER&quot;</span><span class="p">:</span>
+            <span class="n">peerInfo</span> <span class="o">=</span> <span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">msg</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">msg</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="n">repLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Recieved PEER request: identity:</span><span class="si">%s</span><span class="s">  REP:</span><span class="si">%s</span><span class="s">  PUB:</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">peerInfo</span><span class="p">)</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">envelope</span> <span class="o">+</span> <span class="p">[</span><span class="s">&quot;PEER&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubAddr</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">peerInfo</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_subConnect</span><span class="p">(</span><span class="n">peerInfo</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="p">[</span><span class="n">peerInfo</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Peer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peerInfo</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">peerInfo</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">peerInfo</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reqConnect</span><span class="p">(</span><span class="n">peerInfo</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pubPeer</span><span class="p">(</span><span class="n">peerInfo</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">peerInfo</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;PEERS&quot;</span><span class="p">:</span>
+            <span class="n">repLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Recieved PEERS request&quot;</span><span class="p">)</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">envelope</span>
+            <span class="n">reply</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;PEERS&quot;</span><span class="p">)</span>
+            <span class="n">reply</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(((</span><span class="n">ident</span><span class="p">,</span> <span class="n">peer</span><span class="o">.</span><span class="n">_repAddr</span><span class="p">)</span> <span class="k">for</span> <span class="n">ident</span><span class="p">,</span> <span class="n">peer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="o">.</span><span class="n">items</span><span class="p">()))))</span>
+        <span class="k">elif</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;BUCKETS&quot;</span><span class="p">:</span>
+            <span class="n">repLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Recieved BUCKETS request&quot;</span><span class="p">)</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">envelope</span> <span class="o">+</span> <span class="p">[</span><span class="s">&quot;BUCKETS&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">ownedBuckets</span><span class="p">())]</span>
+        <span class="k">elif</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;KEYS&quot;</span><span class="p">:</span>
+            <span class="n">repLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Recieved KEYS request for bucket &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],))</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">envelope</span> <span class="o">+</span> <span class="p">[</span><span class="s">&quot;KEYS&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">getKeySet</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">includeTimestamp</span><span class="o">=</span><span class="bp">True</span><span class="p">))]</span>
+        <span class="k">elif</span> <span class="n">msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;GET&quot;</span><span class="p">:</span>
+            <span class="n">repLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Recieved GET request for key &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="n">envelope</span> <span class="o">+</span> <span class="p">[</span><span class="s">&quot;GET&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">entry</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">)]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ERROR&quot;</span><span class="p">,</span> <span class="s">&quot;KeyError&quot;</span><span class="p">,</span> <span class="s">&quot;GET&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">envelope</span> <span class="o">+</span> <span class="p">[</span><span class="s">&quot;ECHO&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">msg</span>
+        <span class="n">repLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;REPLY: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">reply</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rep</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">(</span><span class="n">reply</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._pubUpdate"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._pubUpdate">[docs]</a>    <span class="k">def</span> <span class="nf">_pubUpdate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send an update message over the PUB socket for the given key.</span>
+
+<span class="sd">        :param key: The key to give an update for.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">getValue</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pub</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="s">&quot;UPDATE|&quot;</span> <span class="o">+</span> <span class="n">entry</span><span class="o">.</span><span class="n">_hash</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">_value</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">)])</span>
+</div>
+<div class="viewcode-block" id="Node._pubPeer"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._pubPeer">[docs]</a>    <span class="k">def</span> <span class="nf">_pubPeer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pub</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="s">&quot;PEER&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">addr</span><span class="p">)])</span>
+</div>
+<div class="viewcode-block" id="Node._handleSub"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._handleSub">[docs]</a>    <span class="k">def</span> <span class="nf">_handleSub</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle messages recieved over the SUB socket.</span>
+
+<span class="sd">        Each message is handled in a spawned greenlet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sub</span><span class="o">.</span><span class="n">recv_multipart</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handleSubMessage</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._heartbeat"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._heartbeat">[docs]</a>    <span class="k">def</span> <span class="nf">_heartbeat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pub</span><span class="o">.</span><span class="n">send_multipart</span><span class="p">([</span><span class="s">&#39;HEARTBEAT&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">])</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Node._handleSubMessage"><a class="viewcode-back" href="../../api/zht.node.html#zht.node.Node._handleSubMessage">[docs]</a>    <span class="k">def</span> <span class="nf">_handleSubMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle an individual message recieved over the SUB socket.</span>
+
+<span class="sd">        :param m: The message to handle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">subLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;SUB: Recieved </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="mi">7</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;UPDATE|&#39;</span><span class="p">:</span>
+            <span class="n">subLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;UPDATE key:</span><span class="si">%s</span><span class="s"> value:</span><span class="si">%s</span><span class="s"> timestamp:</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">putValue</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">3</span><span class="p">])):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pubUpdate</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;HEARTBEAT&#39;</span><span class="p">:</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">subLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;HEARTBEAT: id:&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;PEER&#39;</span><span class="p">:</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">subLog</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;PEER: id:&#39;</span><span class="si">%s</span><span class="s">&#39;, addr:&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">id</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">ZHT 0.0.4 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="../../copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

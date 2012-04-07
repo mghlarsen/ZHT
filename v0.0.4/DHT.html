@@ -1,0 +1,172 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Distributed Hash Table &mdash; ZHT 0.0.4 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="copyright" title="Copyright" href="copyright.html" />
+    <link rel="top" title="ZHT 0.0.4 documentation" href="index.html" />
+    <link rel="next" title="Protocol For REQ/XREP socket pair" href="RequestProtocol.html" />
+    <link rel="prev" title="GNU LESSER GENERAL PUBLIC LICENSE" href="license.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="RequestProtocol.html" title="Protocol For REQ/XREP socket pair"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="license.html" title="GNU LESSER GENERAL PUBLIC LICENSE"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">ZHT 0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="distributed-hash-table">
+<h1>Distributed Hash Table<a class="headerlink" href="#distributed-hash-table" title="Permalink to this headline">¶</a></h1>
+<p>Basic underlying persistence/broadcast mechanism</p>
+<p>Each node maintains a <em>PUB</em>/<em>SUB</em> socket pair, an <em>XREP</em> socket, and a <em>REQ</em> socket for each peer.</p>
+<p><em>PUB</em>/<em>SUB</em>: Used for communicating table updates. Each node should be subscribed to the hash prefixes of any partitions that they are
+responsible for.</p>
+<p><em>REQ</em>/<em>XREP</em>: Used for answering queries about existing information in the table (table sync), getting information about known nodes</p>
+<dl class="docutils">
+<dt>Storage:</dt>
+<dd><ul class="first last simple">
+<li>Use hex(sha1(key)) as the way to determine table position. It&#8217;s a little slow, but makes partitioning easier.</li>
+<li>Partition by prefixes: Number of Buckets is always a power of 2, preferably a power of 16.</li>
+</ul>
+</dd>
+<dt>Joining DHT:</dt>
+<dd><ul class="first last simple">
+<li>Some initial node list must be obtained. New node should connect to the <em>XREP</em> of each initial node with a <em>REQ</em> socket.</li>
+<li>Make a PEERS request to each initial node to find additional nodes until target number of connections has been reached or no
+additional nodes to try.</li>
+<li>Make a PARTITIONS request to each connected node to determine which partitions are held by each node.</li>
+<li>Note the current count of partitons held by each node and the size of each partition.</li>
+<li>Select the least-well covered partitions in the table, and then randomly choose others until a sufficient number have been chosen</li>
+<li>Make SUB connections to known nodes, set subscriptions for the partitions selected, as well as necessary control subscriptions</li>
+<li>For each selected partition:
+- Make KEYS requests to each node that has this partition, and then LOOKUP requests for each reported key in the response
+- Save any and all information retrieved from these LOOKUPS</li>
+</ul>
+</dd>
+<dt><em>SUB</em> socket reader:</dt>
+<dd><ul class="first last simple">
+<li>On each update, if an actual entry in the table was changed, make the update and then <em>PUB</em> the update in case any other peers
+haven&#8217;t recieved it yet</li>
+</ul>
+</dd>
+<dt><em>XREP</em> socket reader:</dt>
+<dd><ul class="first last simple">
+<li>Service each request.</li>
+</ul>
+</dd>
+<dt>Lookup procedure:</dt>
+<dd><ul class="first last simple">
+<li>if parition is held locally, service request locally</li>
+<li>otherwise, use known partition mapping to request the information from the responsible partition</li>
+</ul>
+</dd>
+<dt>Higher-Level ideas:</dt>
+<dd><ul class="first last simple">
+<li>ADD operation: Add a particular value to the set of values under a particular key.</li>
+<li>Use table itself to hold list of peers responsible for each bucket (each node that is responsible must subscribe to this hash).</li>
+<li>Use table itself to hold comprehensive list of peers.</li>
+<li>Provide means to do requests on a 2nd order (not directly connected) peer without initiating a connection.</li>
+<li>BOOTSTRAP request where bootstrapping node provides seed info to speed up the initialization process.</li>
+</ul>
+</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="license.html"
+                        title="previous chapter">GNU LESSER GENERAL PUBLIC LICENSE</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="RequestProtocol.html"
+                        title="next chapter">Protocol For REQ/XREP socket pair</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/DHT.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="RequestProtocol.html" title="Protocol For REQ/XREP socket pair"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="license.html" title="GNU LESSER GENERAL PUBLIC LICENSE"
+             >previous</a> |</li>
+        <li><a href="index.html">ZHT 0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; <a href="copyright.html">Copyright</a> 2011, Michael Larsen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>
