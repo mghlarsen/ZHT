@@ -63,6 +63,21 @@ class Test2NodeZHT(TestCase):
         self.assertEqual(self.aControl.get(['zxcv']), ['poiu'])
         self.assertEqual(self.bControl.get(['zxcv']), ['poiu'])
 
+    def testRGet(self):
+        self.assertEqual(self.aControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.aControl.put('asdf', 'qwer'), ['OK', 'asdf', 'qwer'])
+        self.assertEqual(self.aControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.bControl.get(['asdf']), ['KeyError'])
+        self.assertEqual(self.bControl.connect(['ipc://testSockaREP']), ['OK'])
+        clearWaitingGreenlets(12)
+        self.assertEqual(self.aControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.bControl.get(['asdf']), ['qwer'])
+        self.assertEqual(self.bControl.put('zxcv', 'poiu'), ['OK', 'zxcv', 'poiu'])
+        self.assertEqual(self.aControl.get(['zxcv']), ['poiu'])
+        self.assertEqual(self.bControl.get(['zxcv']), ['poiu'])
+        self.assertEqual(self.aControl.rget(['asdf', 'zxcv']), ['qwer', 'poiu'])
+        self.assertEqual(self.bControl.rget(['asdf', 'zxcv']), ['qwer', 'poiu'])
+
 class Test3NodeZHT(TestCase):
     def setUp(self):
         self.aNode, self.aControl = initNode('a', None)
