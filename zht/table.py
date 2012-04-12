@@ -128,6 +128,15 @@ class Table(object):
         """
         return list(self._owned)
 
+    def owns(self, key):
+        try:
+            b = self._getKeyBucket(key)
+            if b is None:
+                return False
+            return b._owned
+        except:
+            return False
+
 class Bucket(object):
     """
     Construct a new Bucket instance.

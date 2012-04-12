@@ -138,7 +138,10 @@ class Node(object):
                     try:
                         r.append(self._table[key])
                     except KeyError:
-                        r.append('KeyError')
+                        if self._table.owns(key):
+                            r.append('KeyError')
+                        else:
+                            r.append(self._rget(key))
                 self._controlSock.send_multipart(r)
             elif m[0] == 'RGET':
                 r = []
